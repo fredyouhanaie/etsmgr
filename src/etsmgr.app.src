@@ -1,0 +1,15 @@
+{application, etsmgr,
+ [{description, "ETS Table Manager"},
+  {vsn, "0.1.0"},
+  {registered, [etsmgr_srv, etsmgr_sup]},
+  {mod, {etsmgr_app, etsmgr}},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.
