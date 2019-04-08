@@ -19,7 +19,6 @@ etsmgr_start_stop_1_test() ->
     ok = etsmgr:stop(),
     ?assertNot(lists:keymember(etsmgr, 1, application:which_applications())).
 
-
 etsmgr_start_stop_2_test() ->
     Name = aaa,
     ok = etsmgr:start(Name),
@@ -30,6 +29,15 @@ etsmgr_start_stop_2_test() ->
 etsmgr_new_table_1_test() ->
     ok = application:ensure_started(etsmgr),
     {ok, Mgr_pid, Table_id} = etsmgr:new_table(table1, ets_1, []),
+    ?assert(self() == ets:info(Table_id, owner)),
+    ?assert(Mgr_pid == ets:info(Table_id, heir)),
+    {ok, Mgr_pid} = etsmgr:del_table(table1),
+    ok = etsmgr:stop().
+
+etsmgr_add_table_1_test() ->
+    ok = application:ensure_started(etsmgr),
+    ETS_id = ets:new(ets_1, []),
+    {ok, Mgr_pid, Table_id} = etsmgr:add_table(table1, ETS_id),
     ?assert(self() == ets:info(Table_id, owner)),
     ?assert(Mgr_pid == ets:info(Table_id, heir)),
     {ok, Mgr_pid} = etsmgr:del_table(table1),

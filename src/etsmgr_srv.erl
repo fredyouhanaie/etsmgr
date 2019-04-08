@@ -51,7 +51,13 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
 -spec add_table(atom(), atom(), ets:tid()) -> {ok, pid(), ets:tid()} | {error, term()}.
 add_table(Inst_name, Table_name, Table_id) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    gen_server:call(Server_name, {add_table, Table_name, Table_id}).
+    case gen_server:call(Server_name, {add_table, Table_name, Table_id}) of
+	{ok, Mgr_pid, Table_id} ->
+	    ets:setopts(Table_id, {heir, Mgr_pid, Table_name}),
+	    {ok, Mgr_pid, Table_id};
+	Error ->
+	    Error
+    end.
 
 
 %%--------------------------------------------------------------------
