@@ -40,7 +40,13 @@
 -spec new_table(atom(), atom(), atom(), list()) -> {ok, pid(), ets:tid()} | {error, term()}.
 new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    gen_server:call(Server_name, {new_table, Table_name, ETS_name, ETS_opts}).
+    case gen_server:call(Server_name, {new_table, Table_name, ETS_name, ETS_opts}) of
+	{ok, Mgr_pid, Table_id} ->
+	    ets:setopts(Table_id, {heir, Mgr_pid, Table_name}),
+	    {ok, Mgr_pid, Table_id};
+	Error ->
+	    Error
+    end.
 
 
 %%--------------------------------------------------------------------
@@ -294,7 +300,6 @@ new_table_entry(Table_id, Cli_pid) ->
     Mgr_pid = self(),
     case ets:info(Table_id, owner) of
 	Mgr_pid ->
-	    ets:setopts(Table_id, {heir, Mgr_pid, etsmgr}),
 	    ets:give_away(Table_id, Cli_pid, etsmgr),
 	    link(Cli_pid),
 	    {ok, Mgr_pid, Table_id, #{tabid => Table_id, clipid => Cli_pid}};
