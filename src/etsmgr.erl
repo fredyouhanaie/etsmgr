@@ -98,7 +98,7 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
 
 
 %%--------------------------------------------------------------------
-%% @doc Start maneging an existing ETS table.
+%% @doc Start managing an existing ETS table.
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -108,7 +108,7 @@ add_table(Table_name, Table_id) ->
 
 
 %%--------------------------------------------------------------------
-%% @doc Start maneging an existing ETS table.
+%% @doc Start managing an existing ETS table.
 %%
 %% @end
 %%--------------------------------------------------------------------

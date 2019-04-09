@@ -14,7 +14,6 @@
 
 %% API
 -export([start_link/0]).
-
 -export([new_table/4, add_table/3, del_table/2]).
 
 %% gen_server callbacks
@@ -42,8 +41,13 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     case gen_server:call(Server_name, {new_table, Table_name, ETS_name, ETS_opts}) of
 	{ok, Mgr_pid, Table_id} ->
-	    ets:setopts(Table_id, {heir, Mgr_pid, Table_name}),
-	    {ok, Mgr_pid, Table_id};
+	    try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
+		true ->
+		    {ok, Mgr_pid, Table_id}
+	    catch
+		error:E ->
+		    {error, E}
+	    end;
 	Error ->
 	    Error
     end.
@@ -59,8 +63,13 @@ add_table(Inst_name, Table_name, Table_id) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     case gen_server:call(Server_name, {add_table, Table_name, Table_id}) of
 	{ok, Mgr_pid, Table_id} ->
-	    ets:setopts(Table_id, {heir, Mgr_pid, Table_name}),
-	    {ok, Mgr_pid, Table_id};
+	    try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
+		true ->
+		    {ok, Mgr_pid, Table_id}
+	    catch
+		error:E ->
+		    {error, E}
+	    end;
 	Error ->
 	    Error
     end.
