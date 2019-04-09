@@ -14,7 +14,7 @@
 
 %% API
 -export([start_link/0]).
--export([new_table/4, add_table/3, del_table/2]).
+-export([new_table/4, add_table/3, del_table/2, info/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -84,6 +84,17 @@ add_table(Inst_name, Table_name, Table_id) ->
 del_table(Inst_name, Table_name) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     gen_server:call(Server_name, {del_table, Table_name}).
+
+
+%%--------------------------------------------------------------------
+%% @doc Return the tables currently under management.
+%%
+%% @end
+%%--------------------------------------------------------------------
+-spec info(atom()) -> map().
+info(Inst_name) ->
+    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
+    gen_server:call(Server_name, {info}).
 
 
 %%--------------------------------------------------------------------
@@ -157,6 +168,9 @@ handle_call({del_table, Table_name}, _From={Cli_pid, _Cli_ref}, State) ->
 	Error = {error, _Reason} ->
 	    {reply, Error, State}
     end;
+
+handle_call({info}, _From, State) ->
+    {reply, State#state.tables, State};
 
 handle_call(_Request, _From, State) ->
     Reply = ok,

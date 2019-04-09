@@ -15,8 +15,8 @@
 -export([start/0, stop/0]).
 -export([start/1, stop/1]).
 -export([inst_to_name/2]).
--export([new_table/3, add_table/2, del_table/1]).
--export([new_table/4, add_table/3, del_table/2]).
+-export([new_table/3, add_table/2, del_table/1, info/0]).
+-export([new_table/4, add_table/3, del_table/2, info/1]).
 
 %%====================================================================
 %% API functions
@@ -135,6 +135,26 @@ del_table(Table_name) ->
 -spec del_table(atom(), atom()) -> ok | {error, term}.
 del_table(Inst_name, Table_name) ->
     etsmgr_srv:del_table(Inst_name, Table_name).
+
+
+%%--------------------------------------------------------------------
+%% @doc Return the tables currently under management.
+%%
+%% @end
+%%--------------------------------------------------------------------
+-spec info() -> map().
+info() ->
+    info(etsmgr).
+
+
+%%--------------------------------------------------------------------
+%% @doc Return the tables currently under management.
+%%
+%% @end
+%%--------------------------------------------------------------------
+-spec info(atom()) -> map().
+info(Inst_name) ->
+    etsmgr_srv:info(Inst_name).
 
 
 %%--------------------------------------------------------------------
