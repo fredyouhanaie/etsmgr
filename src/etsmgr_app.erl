@@ -13,15 +13,12 @@
 -behaviour(application).
 
 %% Application callbacks
--export([start/0, start/2, start_phase/3, stop/1, prep_stop/1,
+-export([start/2, start_phase/3, stop/1, prep_stop/1,
 	 config_change/3]).
 
 %%%===================================================================
 %%% Application callbacks
 %%%===================================================================
-
-start() ->
-    start(normal, []).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -33,13 +30,7 @@ start() ->
 %% top supervisor of the tree.
 %% @end
 %%--------------------------------------------------------------------
--spec start(StartType :: normal |
-			 {takeover, Node :: node()} |
-			 {failover, Node :: node()},
-	    StartArgs :: term()) ->
-		   {ok, Pid :: pid()} |
-		   {ok, Pid :: pid(), State :: term()} |
-		   {error, Reason :: term()}.
+-spec start(normal, atom()) -> {ok, pid()} | {error, term()}.
 start(normal, Inst_name) ->
     case etsmgr_sup:start_link(Inst_name) of
 	{ok, Pid} ->
