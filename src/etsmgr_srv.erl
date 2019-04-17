@@ -13,7 +13,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 -export([new_table/4, add_table/3, del_table/2, info/1]).
 
 %% gen_server callbacks
@@ -22,7 +22,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {tables}).
+-record(state, {inst_name, tables}).
 
 %%%===================================================================
 %%% API
@@ -102,12 +102,13 @@ info(Inst_name) ->
 %% Starts the server
 %% @end
 %%--------------------------------------------------------------------
--spec start_link() -> {ok, Pid :: pid()} |
+-spec start_link(atom()) -> {ok, Pid :: pid()} |
 		      {error, Error :: {already_started, pid()}} |
 		      {error, Error :: term()} |
 		      ignore.
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Inst_name) ->
+    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
+    gen_server:start_link({local, Server_name}, ?MODULE, Inst_name, []).
 
 
 %%%===================================================================
@@ -120,14 +121,14 @@ start_link() ->
 %% Initializes the server
 %% @end
 %%--------------------------------------------------------------------
--spec init(Args :: term()) -> {ok, State :: term()} |
+-spec init(atom()) -> {ok, State :: term()} |
 			      {ok, State :: term(), Timeout :: timeout()} |
 			      {ok, State :: term(), hibernate} |
 			      {stop, Reason :: term()} |
 			      ignore.
-init([]) ->
+init(Inst_name) ->
     process_flag(trap_exit, true),
-    {ok, #state{tables=maps:new()}}.
+    {ok, #state{inst_name=Inst_name, tables=maps:new()}}.
 
 %%--------------------------------------------------------------------
 %% @private

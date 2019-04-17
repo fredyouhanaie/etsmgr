@@ -13,7 +13,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -29,13 +29,14 @@
 %% Starts the supervisor
 %% @end
 %%--------------------------------------------------------------------
--spec start_link() -> {ok, Pid :: pid()} |
+-spec start_link(atom()) -> {ok, Pid :: pid()} |
 		      {error, {already_started, Pid :: pid()}} |
 		      {error, {shutdown, term()}} |
 		      {error, term()} |
 		      ignore.
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Inst_name) ->
+    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
+    supervisor:start_link({local, Server_name}, ?MODULE, Inst_name).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -50,18 +51,18 @@ start_link() ->
 %% specifications.
 %% @end
 %%--------------------------------------------------------------------
--spec init(Args :: term()) ->
+-spec init(atom()) ->
 		  {ok, {SupFlags :: supervisor:sup_flags(),
 			[ChildSpec :: supervisor:child_spec()]}} |
 		  ignore.
-init([]) ->
+init(Inst_name) ->
 
     SupFlags = #{strategy => one_for_one,
 		 intensity => 1,
 		 period => 5},
 
     Child1 = #{id => 'etsmgr_srv',
-	       start => {'etsmgr_srv', start_link, []},
+	       start => {'etsmgr_srv', start_link, [Inst_name]},
 	       restart => permanent,
 	       shutdown => 5000,
 	       type => worker,

@@ -40,8 +40,8 @@ start() ->
 		   {ok, Pid :: pid()} |
 		   {ok, Pid :: pid(), State :: term()} |
 		   {error, Reason :: term()}.
-start(_StartType, _StartArgs) ->
-    case etsmgr_sup:start_link() of
+start(normal, Inst_name) ->
+    case etsmgr_sup:start_link(Inst_name) of
 	{ok, Pid} ->
 	    {ok, Pid};
 	Error ->
