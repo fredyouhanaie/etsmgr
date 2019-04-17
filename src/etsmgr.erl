@@ -17,6 +17,7 @@
 -export([inst_to_name/2]).
 -export([new_table/3, add_table/2, del_table/1, info/0]).
 -export([new_table/4, add_table/3, del_table/2, info/1]).
+-export([wait4etsmgr/0, wait4etsmgr/1]).
 
 %%====================================================================
 %% API functions
@@ -158,6 +159,27 @@ info(Inst_name) ->
 
 
 %%--------------------------------------------------------------------
+%% @doc Block until the unnamed instance of the table manager has started.
+%%
+%% @end
+%%--------------------------------------------------------------------
+-spec wait4etsmgr() -> ok.
+wait4etsmgr() ->
+    wait4etsmgr(etsmgr).
+
+
+%%--------------------------------------------------------------------
+%% @doc Block until a named instance of the table manager has started.
+%%
+%% @end
+%%--------------------------------------------------------------------
+-spec wait4etsmgr(atom()) -> ok.
+wait4etsmgr(Inst_name) ->
+    Server_name = inst_to_name(etsmgr_srv, Inst_name),
+    wait4server(Server_name).
+
+
+%%--------------------------------------------------------------------
 %% @doc
 %% Convert an instance name to longer prefixed name.
 %%
@@ -181,3 +203,20 @@ inst_to_name(Prefix, Inst_name) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+%%--------------------------------------------------------------------
+%% @doc Block until a registered process has started.
+%%
+%% We check for the registered process at one second intervals.
+%%
+%% @end
+%%--------------------------------------------------------------------
+-spec wait4server(atom()) -> ok.
+wait4server(Server_name) ->
+    case erlang:whereis(Server_name) of
+	undefined ->
+	    timer:sleep(1000),
+	    wait4server(Server_name);
+	Pid when is_pid(Pid) ->
+	    ok
+    end.
