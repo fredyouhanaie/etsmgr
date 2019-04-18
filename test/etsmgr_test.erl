@@ -13,9 +13,19 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+check_server(Server, Inst_name) ->
+    Process_name = etsmgr:inst_to_name(Server, Inst_name),
+    erlang:whereis(Process_name) =/= undefined.
+
+etsmgr_inst_name_test() ->
+    ?assert(etsmgr_srv == etsmgr:inst_to_name(etsmgr_srv, etsmgr)),
+    ?assert(etsmgr_srv_aaa == etsmgr:inst_to_name(etsmgr_srv, aaa)).
+
 etsmgr_start_stop_1_test() ->
     ok = etsmgr:start(),
     ?assert(lists:keymember(etsmgr, 1, application:which_applications())),
+    ?assert(check_server(etsmgr_srv, etsmgr)),
+    ?assert(check_server(etsmgr_sup, etsmgr)),
     ok = etsmgr:stop(),
     ?assertNot(lists:keymember(etsmgr, 1, application:which_applications())).
 
@@ -23,6 +33,8 @@ etsmgr_start_stop_2_test() ->
     Name = aaa,
     ok = etsmgr:start(Name),
     ?assert(lists:keymember(Name, 1, application:which_applications())),
+    ?assert(check_server(etsmgr_srv, Name)),
+    ?assert(check_server(etsmgr_sup, Name)),
     ok = etsmgr:stop(Name),
     ?assertNot(lists:keymember(Name, 1, application:which_applications())).
 
