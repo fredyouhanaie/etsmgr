@@ -265,7 +265,7 @@ format_status(_Opt, Status) ->
 %%
 %% <li>Check, and, if needed, create ETS table</li>
 %%
-%% <li>If all ok, return the etsmgr pid, the table id' and and updates
+%% <li>If all ok, return the etsmgr pid, the table id, and update the
 %% tables map.</li>
 %%
 %% </ol>
