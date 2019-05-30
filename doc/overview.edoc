@@ -37,9 +37,9 @@
     While adapting and embedding DeadZen's
     <a href="https://github.com/DeadZen/etsgive">
       implementation
-    </a>
+    </a>,
     as referenced in the second article, would have sufficed, it was
-    felt that a more generic reusable approach would help future
+    felt that a more generic and reusable approach would help future
     projects.
 </p>
 
@@ -52,7 +52,7 @@
 
 <p>
   Multiple instances of `etsmgr' can co-exist on the same node by
-  starting the applications with unique instance names.
+  starting the `etsmgr' applications with unique instance names.
 </p>
 
 <p>
@@ -71,30 +71,31 @@
 </p>
 
 <p>
-  Internally, the `etsmgr' server will maintain a directory of client
-  pids and ETS table ids. We always use table ids, even for named ETS
-  tables. The directory entries will be indexed by a unique name
-  supplied by the client.
+  Internally, an instance of the `etsmgr' server maintains a directory
+  of client pids and ETS table ids. We always use ETS table ids, even
+  for named ETS tables. The directory entries will be indexed by a
+  unique (within the instance) name supplied by the client.
 </p>
 
 <p>
   If a client process with a table managed by `etsmgr'
   crashes/terminates, the table will not be lost. Once the client
-  restarts, it can ask `etsmgr` for the ownership of the table.
+  restarts, it can ask `etsmgr' for the ownership of the table.
 </p>
 
 <p>
-  If `etsmgr' crashes, provided that the client has the `trap_exit'
-  flag set, it will receive an `EXIT' message with the process id of
-  `etsmgr'. This should trigger a mechanism in the client to
-  reregister its ETS table(s) with the new instance of `etsmgr' as
-  soon as the server restarts.
+  If `etsmgr' crashes, and provided that the client has the
+  `trap_exit' flag set, it will receive an `EXIT' message with the
+  process id of `etsmgr'. This should trigger a mechanism within the
+  client to reregister its ETS table(s) with the new instance of
+  `etsmgr' as soon as the server restarts.
 </p>
 
 <p>
   If the client does not set the `trap_exit' flag, then it will
-  terminate as soon as `etsmgr' terminates. However, this would be
-  very unusual in an application that cares about resilience!
+  terminate as soon as `etsmgr' terminates. However, not setting
+  `trap_exit' would be very unusual in an application that cares about
+  resilience!
 </p>
 
 <p>
@@ -249,11 +250,11 @@
 
 <p>
   This will create a new ETS table, and the manager will link to the
-  client process. We expect this call when the client has started, or
-  restarted following a crash. In the latter case we would expect the
-  manager to be aware of the entry. On successful completion, the
-  client will be the owner of the ETS table, and `etsmgr_srv' will be
-  the heir.
+  client process. We expect this call to be made when the client has
+  started, or restarted following a crash. In the latter case we would
+  expect the manager to be aware of the entry. On successful
+  completion, the client will be the owner of the ETS table, and
+  `etsmgr_srv' will be the heir.
 </p>
 
 <h4>`etsmgr:add_table/2,3'</h4>
@@ -280,8 +281,8 @@
 <p>
   This is a helper function that can be used by the client to ensure
   `etsmgr' is up and running, either at start up or following the
-  termination of `etsmgr'. The function will block until `etsmgr' is
-  available.
+  unexpected termination of `etsmgr'. The function will block until
+  `etsmgr' is available.
 </p>
 
 <h4>`etsmgr:info/0,1'</h4>
