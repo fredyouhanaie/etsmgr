@@ -3,7 +3,23 @@
 %%% @copyright (C) 2019, Fred Youhanaie
 %%% @doc
 %%%
-%%% Supervisor for the `etsmgr' application.
+%%% This is the supervisor for the `etsmgr' server. It manages a
+%%% single instance of the `etsmgr_srv' server.
+%%%
+%%% For an standalone instance of `etsmgr', the supervisor will be
+%%% ultimately started via the `etsmgr:start/0,1' functions.
+%%%
+%%% For an embedded instance of `etsmgr', and if this extra supervisor
+%%% is required, the supervisor should be added as a child of the
+%%% client's supervisor. An instance name will need to be given to the
+%%% `etsmgr_sup:start_link/1' function. Below is an example snippet of
+%%% a typical `supervisor:child_spec()' entry:
+%%%
+%%% <pre>
+%%%   #{id => 'etsmgr_sup',
+%%%     start => {'etsmgr_sup', start_link, [Inst_name]},
+%%%     type => supervisor}
+%%% </pre>
 %%%
 %%% @end
 %%% Created :  1 Apr 2019 by Fred Youhanaie <fyrlang@anydata.co.uk>

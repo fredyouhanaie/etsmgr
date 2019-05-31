@@ -3,7 +3,28 @@
 %%% @copyright (C) 2019, Fred Youhanaie
 %%% @doc
 %%%
-%%% The main `etsmgr' server (gen_server).
+%%% This is the main `etsmgr' server (gen_server). It can manage
+%%% multiple ETS tables from multiple clients.
+%%%
+%%% The server is expected to be supervised either by an instance of
+%%% `etsmgr_sup', or a client's own supervisor.
+%%%
+%%% All client requests to this server are expected to come from
+%%% functions in the `etsmgr' module.
+%%%
+%%% The server maintains an internal `map' of the ETS tables that it
+%%% has been asked to manage. Each entry in this map is identified by
+%%% a unique key supplied by the client, and contains a further map of
+%%% details of the ETS table.
+%%%
+%%% New entries are added via the `new_table' or `add_table' requests.
+%%%
+%%% Existing entries are removed via the `del_table' request.
+%%%
+%%% If the owner process of a table terminates, the server will
+%%% receive an `EXIT' message. On receiving the message the entries
+%%% for all tables owned by that process will be flagged as having no
+%%% client owner.
 %%%
 %%% @end
 %%% Created :  1 Apr 2019 by Fred Youhanaie <fyrlang@anydata.co.uk>
@@ -32,7 +53,19 @@
 %%--------------------------------------------------------------------
 %% @doc Create and manage an ETS table.
 %%
-%% This functions is called from the `etsmgr' module.
+%% This functions is expected to be called from the `etsmgr' module.
+%%
+%% If `Table_name' is not known to `etsmgr', a new ETS table will be
+%% created, the calling process will be the owner of the table, with
+%% `etsmgr' the heir, and `etsmgr' will be linked to the client
+%% process.
+%%
+%% If an entry for `Table_name' already exists, then either the client
+%% has restarted following a crash, or there is a name conflict with
+%% another application. In the case of a restart, `etsmgr' will behave
+%% as if this is a fresh start, but the table will not be created and
+%% no data will be lost. In the case of a name conflict, an error will
+%% be returned.
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -56,6 +89,15 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
 %%--------------------------------------------------------------------
 %% @doc manage an existing ETS table.
 %%
+%% This functions is expected to be called from the `etsmgr' module.
+%%
+%% This function is typically called when an application needs
+%% `etsmgr' to manage its ETS table(s), which already exist, either
+%% because the application prefers to create its own tables, or it has
+%% detected that the instance of `etsmgr' that was already managing
+%% the ETS tables has crashed and restarted, and this server is the
+%% replacement instance.
+%%
 %% @end
 %%--------------------------------------------------------------------
 -spec add_table(atom(), atom(), ets:tid()) -> {ok, pid(), ets:tid()} | {error, term()}.
@@ -76,7 +118,15 @@ add_table(Inst_name, Table_name, Table_id) ->
 
 
 %%--------------------------------------------------------------------
-%% @doc Remove a table from the list of managed tables.
+%% @doc Remove a table from the list of managed tables, and unlink
+%% from the client_pid.
+%%
+%% We can only remove an entry if the request comes from the
+%% registered client, or from the owner of the table. If this
+%% condition is not met, `{error, not_owner}' is returned.
+%%
+%% We will also remove a table entry if the ETS table no longer
+%% exists.
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -88,6 +138,12 @@ del_table(Inst_name, Table_name) ->
 
 %%--------------------------------------------------------------------
 %% @doc Return the tables currently under management.
+%%
+%% This is primarily for debugging and troubleshooting.
+%%
+%% A map is returned where each entry has the client supplied
+%% `Table_name' as key, and a further map as the value. The inner map
+%% contains details of the corresponding ETS table being managed.
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -380,7 +436,7 @@ check_table_ets_entry(Table_id, Cli_pid) ->
 
 
 %%--------------------------------------------------------------------
-%% @doc Chec, then create/update a table entry.
+%% @doc Check, then create/update a table entry.
 %%
 %% @end
 %%--------------------------------------------------------------------
@@ -489,8 +545,10 @@ del_table_check(Cli_pid, Table) ->
 %%--------------------------------------------------------------------
 %% @doc handle the `EXIT' message.
 %%
-%% We scan through existing tables, remove `Cli_pid' from the matching
-%% entries.
+%% We scan through all existing table entries and replace `Cli_pid' in
+%% the matching entries with `none'.
+%%
+%% Note that the same client may appear multiple times!
 %%
 %% @end
 %%--------------------------------------------------------------------

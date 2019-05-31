@@ -5,6 +5,13 @@
 %%%
 %%% Main `etsmgr' application.
 %%%
+%%% This module is for managing the standalone instances of `etsmgr'
+%%% application.
+%%%
+%%% None of the functions in this module should be called
+%%% directly. Instead, use the `start/0,1' and `stop/0,1' functions in
+%%% the `etsmgr' module.
+%%%
 %%% @end
 %%% Created :  1 Apr 2019 by Fred Youhanaie <fyrlang@anydata.co.uk>
 %%%-------------------------------------------------------------------

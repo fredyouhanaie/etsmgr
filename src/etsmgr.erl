@@ -3,7 +3,29 @@
 %%% @copyright (C) 2019, Fred Youhanaie
 %%% @doc
 %%%
-%%% Client functions for `etsmgr'.
+%%% These are the main functions for interacting with the `etsmgr'
+%%% server.
+%%%
+%%% If multiple instances of `etsmgr' are going be running
+%%% concurrently, then they need to run as named instances. One
+%%% unnamed instance can coexist with named instances, however, the
+%%% unnamed instance is in fact a named instance with the fixed name
+%%% of `etsmgr'.
+%%%
+%%% All the functions, except one, have two variants, one for the
+%%% unnamed instance of the server, and one for the named one.
+%%%
+%%% An instance of `etsmgr' can run as a standalone application, or it
+%%% can be embedded within the supervision tree of another
+%%% application.
+%%%
+%%% If `etsmgr' is running as an standalone application, then
+%%% `start/0,1' and `stop/0,1' can be used to start and stop the
+%%% application.
+%%%
+%%% For the embedded mode, the `etsmgr_srv' server will need to be
+%%% started from within the client's supervisor, either directly or
+%%% via `etsmgr_sup'.
 %%%
 %%% @end
 %%% Created :  1 Apr 2019 by Fred Youhanaie <fyrlang@anydata.co.uk>
@@ -154,8 +176,11 @@ add_table(Table_name, Table_id) ->
 %% This function is typically called when an application needs
 %% `etsmgr' to manage its ETS table(s), which already exist, either
 %% because the application prefers to create its own tables, or it has
-%% detected tat the instance of `etsmgr' that was already managing the
-%% ETS tables has crashed and restarted.
+%% detected that the instance of `etsmgr' that was already managing
+%% the ETS tables has crashed and restarted.
+%%
+%% `Table_name' uniquely identifies the table within this instance of
+%% `etsmgr'.
 %%
 %% @end
 %%--------------------------------------------------------------------
