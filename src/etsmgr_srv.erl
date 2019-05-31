@@ -286,6 +286,7 @@ handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables) ->
 			     new_table_entry(Table_tid, Cli_pid)
 		     end
 	     end,
+
     case Result of
 	{ok, Mgr_pid, Table_id, Table2} ->
 	    {ok, Mgr_pid, Table_id, maps:put(Table_name, Table2, Tables)};
@@ -462,6 +463,8 @@ handle_del_table(Table_name, Cli_pid, Tables) ->
 %% We can only remove an entry if the request comes from the
 %% registered client, or from the owner of the table.
 %%
+%% We will also remove the entry, if the ETS table no longer exists.
+%%
 %% @end
 %%--------------------------------------------------------------------
 -spec del_table_check(pid(), map()) -> {ok, pid()} | {error, term()}.
@@ -474,7 +477,7 @@ del_table_check(Cli_pid, Table) ->
 	true ->
 	    case ets:info(Table_tabid, owner) of
 		undefined ->
-		    {error, no_such_ets_table};
+		    {ok, Table_clipid};
 		Table_clipid ->
 		    {ok, Table_clipid};
 		_Other_owner ->
