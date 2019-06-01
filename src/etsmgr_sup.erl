@@ -1,3 +1,4 @@
+% -*- indent-tabs-mode:nil; -*-
 %%%-------------------------------------------------------------------
 %%% @author Fred Youhanaie <fyrlang@anydata.co.uk>
 %%% @copyright (C) 2019, Fred Youhanaie
@@ -46,10 +47,10 @@
 %% @end
 %%--------------------------------------------------------------------
 -spec start_link(atom()) -> {ok, Pid :: pid()} |
-		      {error, {already_started, Pid :: pid()}} |
-		      {error, {shutdown, term()}} |
-		      {error, term()} |
-		      ignore.
+                      {error, {already_started, Pid :: pid()}} |
+                      {error, {shutdown, term()}} |
+                      {error, term()} |
+                      ignore.
 start_link(Inst_name) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     supervisor:start_link({local, Server_name}, ?MODULE, Inst_name).
@@ -68,21 +69,21 @@ start_link(Inst_name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec init(atom()) ->
-		  {ok, {SupFlags :: supervisor:sup_flags(),
-			[ChildSpec :: supervisor:child_spec()]}} |
-		  ignore.
+                  {ok, {SupFlags :: supervisor:sup_flags(),
+                        [ChildSpec :: supervisor:child_spec()]}} |
+                  ignore.
 init(Inst_name) ->
 
     SupFlags = #{strategy => one_for_one,
-		 intensity => 1,
-		 period => 5},
+                 intensity => 1,
+                 period => 5},
 
     Child1 = #{id => 'etsmgr_srv',
-	       start => {'etsmgr_srv', start_link, [Inst_name]},
-	       restart => permanent,
-	       shutdown => 5000,
-	       type => worker,
-	       modules => ['etsmgr_srv']},
+               start => {'etsmgr_srv', start_link, [Inst_name]},
+               restart => permanent,
+               shutdown => 5000,
+               type => worker,
+               modules => ['etsmgr_srv']},
 
     {ok, {SupFlags, [Child1]}}.
 

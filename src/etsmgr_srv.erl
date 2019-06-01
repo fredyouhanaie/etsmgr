@@ -1,3 +1,4 @@
+% -*- indent-tabs-mode:nil; -*-
 %%%-------------------------------------------------------------------
 %%% @author Fred Youhanaie <fyrlang@anydata.co.uk>
 %%% @copyright (C) 2019, Fred Youhanaie
@@ -39,7 +40,7 @@
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-	 terminate/2, code_change/3, format_status/2]).
+         terminate/2, code_change/3, format_status/2]).
 
 -define(SERVER, ?MODULE).
 
@@ -73,16 +74,16 @@
 new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     case gen_server:call(Server_name, {new_table, Table_name, ETS_name, ETS_opts}) of
-	{ok, Mgr_pid, Table_id} ->
-	    try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
-		true ->
-		    {ok, Mgr_pid, Table_id}
-	    catch
-		error:E ->
-		    {error, E}
-	    end;
-	Error ->
-	    Error
+        {ok, Mgr_pid, Table_id} ->
+            try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
+                true ->
+                    {ok, Mgr_pid, Table_id}
+            catch
+                error:E ->
+                    {error, E}
+            end;
+        Error ->
+            Error
     end.
 
 
@@ -104,16 +105,16 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
 add_table(Inst_name, Table_name, Table_id) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     case gen_server:call(Server_name, {add_table, Table_name, Table_id}) of
-	{ok, Mgr_pid, Table_id} ->
-	    try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
-		true ->
-		    {ok, Mgr_pid, Table_id}
-	    catch
-		error:E ->
-		    {error, E}
-	    end;
-	Error ->
-	    Error
+        {ok, Mgr_pid, Table_id} ->
+            try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
+                true ->
+                    {ok, Mgr_pid, Table_id}
+            catch
+                error:E ->
+                    {error, E}
+            end;
+        Error ->
+            Error
     end.
 
 
@@ -159,9 +160,9 @@ info(Inst_name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec start_link(atom()) -> {ok, Pid :: pid()} |
-		      {error, Error :: {already_started, pid()}} |
-		      {error, Error :: term()} |
-		      ignore.
+                      {error, Error :: {already_started, pid()}} |
+                      {error, Error :: term()} |
+                      ignore.
 start_link(Inst_name) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     gen_server:start_link({local, Server_name}, ?MODULE, Inst_name, []).
@@ -178,10 +179,10 @@ start_link(Inst_name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec init(atom()) -> {ok, State :: term()} |
-			      {ok, State :: term(), Timeout :: timeout()} |
-			      {ok, State :: term(), hibernate} |
-			      {stop, Reason :: term()} |
-			      ignore.
+                              {ok, State :: term(), Timeout :: timeout()} |
+                              {ok, State :: term(), hibernate} |
+                              {stop, Reason :: term()} |
+                              ignore.
 init(Inst_name) ->
     process_flag(trap_exit, true),
     {ok, #state{inst_name=Inst_name, tables=maps:new()}}.
@@ -193,37 +194,37 @@ init(Inst_name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_call(Request :: term(), From :: {pid(), term()}, State :: term()) ->
-			 {reply, Reply :: term(), NewState :: term()} |
-			 {reply, Reply :: term(), NewState :: term(), Timeout :: timeout()} |
-			 {reply, Reply :: term(), NewState :: term(), hibernate} |
-			 {noreply, NewState :: term()} |
-			 {noreply, NewState :: term(), Timeout :: timeout()} |
-			 {noreply, NewState :: term(), hibernate} |
-			 {stop, Reason :: term(), Reply :: term(), NewState :: term()} |
-			 {stop, Reason :: term(), NewState :: term()}.
+                         {reply, Reply :: term(), NewState :: term()} |
+                         {reply, Reply :: term(), NewState :: term(), Timeout :: timeout()} |
+                         {reply, Reply :: term(), NewState :: term(), hibernate} |
+                         {noreply, NewState :: term()} |
+                         {noreply, NewState :: term(), Timeout :: timeout()} |
+                         {noreply, NewState :: term(), hibernate} |
+                         {stop, Reason :: term(), Reply :: term(), NewState :: term()} |
+                         {stop, Reason :: term(), NewState :: term()}.
 
 handle_call({new_table, Table_name, ETS_name, ETS_opts}, _From={Cli_pid, _Cli_ref}, State) ->
     case handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, State#state.tables) of
-	{ok, Mgr_pid, Table_id, Tables} ->
-	    {reply, {ok, Mgr_pid, Table_id}, #state{tables=Tables}};
-	Error = {error, _Reason} ->
-	    {reply, Error, State}
+        {ok, Mgr_pid, Table_id, Tables} ->
+            {reply, {ok, Mgr_pid, Table_id}, #state{tables=Tables}};
+        Error = {error, _Reason} ->
+            {reply, Error, State}
     end;
 
 handle_call({add_table, Table_name, Table_id}, _From={Cli_pid, _Cli_ref}, State) ->
     case handle_add_table(Table_name, Table_id, Cli_pid, State#state.tables) of
-	{ok, Mgr_pid, Table_id, Tables} ->
-	    {reply, {ok, Mgr_pid, Table_id},  #state{tables=Tables}};
-	Error = {error, _Reason} ->
-	    {reply, Error, State}
+        {ok, Mgr_pid, Table_id, Tables} ->
+            {reply, {ok, Mgr_pid, Table_id},  #state{tables=Tables}};
+        Error = {error, _Reason} ->
+            {reply, Error, State}
     end;
 
 handle_call({del_table, Table_name}, _From={Cli_pid, _Cli_ref}, State) ->
     case handle_del_table(Table_name, Cli_pid, State#state.tables) of
-	{ok, Mgr_pid, Tables} ->
-	    {reply, {ok, Mgr_pid}, #state{tables=Tables}};
-	Error = {error, _Reason} ->
-	    {reply, Error, State}
+        {ok, Mgr_pid, Tables} ->
+            {reply, {ok, Mgr_pid}, #state{tables=Tables}};
+        Error = {error, _Reason} ->
+            {reply, Error, State}
     end;
 
 handle_call({info}, _From, State) ->
@@ -240,10 +241,10 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_cast(Request :: term(), State :: term()) ->
-			 {noreply, NewState :: term()} |
-			 {noreply, NewState :: term(), Timeout :: timeout()} |
-			 {noreply, NewState :: term(), hibernate} |
-			 {stop, Reason :: term(), NewState :: term()}.
+                         {noreply, NewState :: term()} |
+                         {noreply, NewState :: term(), Timeout :: timeout()} |
+                         {noreply, NewState :: term(), hibernate} |
+                         {stop, Reason :: term(), NewState :: term()}.
 handle_cast(_Request, State) ->
     {noreply, State}.
 
@@ -254,10 +255,10 @@ handle_cast(_Request, State) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_info(Info :: timeout() | term(), State :: term()) ->
-			 {noreply, NewState :: term()} |
-			 {noreply, NewState :: term(), Timeout :: timeout()} |
-			 {noreply, NewState :: term(), hibernate} |
-			 {stop, Reason :: normal | term(), NewState :: term()}.
+                         {noreply, NewState :: term()} |
+                         {noreply, NewState :: term(), Timeout :: timeout()} |
+                         {noreply, NewState :: term(), hibernate} |
+                         {stop, Reason :: normal | term(), NewState :: term()}.
 handle_info({'EXIT', Cli_pid, Reason}, State) ->
     Tables = State#state.tables,
     {ok, Tables2} = handle_EXIT(Cli_pid, Reason, Tables),
@@ -280,7 +281,7 @@ handle_info(_Info, State) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec terminate(Reason :: normal | shutdown | {shutdown, term()} | term(),
-		State :: term()) -> any().
+                State :: term()) -> any().
 terminate(_Reason, _State) ->
     ok.
 
@@ -291,9 +292,9 @@ terminate(_Reason, _State) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec code_change(OldVsn :: term() | {down, term()},
-		  State :: term(),
-		  Extra :: term()) -> {ok, NewState :: term()} |
-				      {error, Reason :: term()}.
+                  State :: term(),
+                  Extra :: term()) -> {ok, NewState :: term()} |
+                                      {error, Reason :: term()}.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
@@ -306,7 +307,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec format_status(Opt :: normal | terminate,
-		    Status :: list()) -> Status :: term().
+                    Status :: list()) -> Status :: term().
 format_status(_Opt, Status) ->
     Status.
 
@@ -331,23 +332,23 @@ format_status(_Opt, Status) ->
 -spec handle_new_table(atom(), atom(), list(), pid(), map()) -> {ok, pid(), ets:tid(), map()} | {error, term()}.
 handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables) ->
     Result = case maps:find(Table_name, Tables) of
-		 error -> %% error is good, we create new table and entry
-		     new_table_ets(ETS_name, ETS_opts, Cli_pid);
-		 {ok, Table} ->
-		     {ok, Table_tid} = maps:find(tabid, Table),
-		     case ets:info(Table_tid) of
-			 undefined -> %% dead table entry, we create new table and entry
-			     new_table_ets(ETS_name, ETS_opts, Cli_pid);
-			 _ -> %% We have a live entry, check/update entry
-			     new_table_entry(Table_tid, Cli_pid)
-		     end
-	     end,
+                 error -> %% error is good, we create new table and entry
+                     new_table_ets(ETS_name, ETS_opts, Cli_pid);
+                 {ok, Table} ->
+                     {ok, Table_tid} = maps:find(tabid, Table),
+                     case ets:info(Table_tid) of
+                         undefined -> %% dead table entry, we create new table and entry
+                             new_table_ets(ETS_name, ETS_opts, Cli_pid);
+                         _ -> %% We have a live entry, check/update entry
+                             new_table_entry(Table_tid, Cli_pid)
+                     end
+             end,
 
     case Result of
-	{ok, Mgr_pid, Table_id, Table2} ->
-	    {ok, Mgr_pid, Table_id, maps:put(Table_name, Table2, Tables)};
-	Error = {error, _Reason} ->
-	    Error
+        {ok, Mgr_pid, Table_id, Table2} ->
+            {ok, Mgr_pid, Table_id, maps:put(Table_name, Table2, Tables)};
+        Error = {error, _Reason} ->
+            Error
     end.
 
 
@@ -359,12 +360,12 @@ handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables) ->
 -spec new_table_ets(atom(), list(), pid()) -> {ok, pid(), ets:tid(), map()} | {error, term()}.
 new_table_ets(ETS_name, ETS_opts, Cli_pid) ->
     try ets:new(ETS_name, ETS_opts) of
-	ETS_table ->
-	    Table_id = ets:info(ETS_table, id),
-	    new_table_entry(Table_id, Cli_pid)
+        ETS_table ->
+            Table_id = ets:info(ETS_table, id),
+            new_table_entry(Table_id, Cli_pid)
     catch
-	error:E ->
-	    {error, E}
+        error:E ->
+            {error, E}
     end.
 
 
@@ -380,15 +381,15 @@ new_table_ets(ETS_name, ETS_opts, Cli_pid) ->
 new_table_entry(Table_id, Cli_pid) ->
     Mgr_pid = self(),
     case ets:info(Table_id, owner) of
-	Mgr_pid ->
-	    ets:give_away(Table_id, Cli_pid, etsmgr),
-	    link(Cli_pid),
-	    {ok, Mgr_pid, Table_id, #{tabid => Table_id, clipid => Cli_pid}};
-	Cli_pid ->
-	    link(Cli_pid),
-	    {ok, Mgr_pid, Table_id, #{tabid => Table_id, clipid => Cli_pid}};
-	_Other_owner ->
-	    {error, table_exists}
+        Mgr_pid ->
+            ets:give_away(Table_id, Cli_pid, etsmgr),
+            link(Cli_pid),
+            {ok, Mgr_pid, Table_id, #{tabid => Table_id, clipid => Cli_pid}};
+        Cli_pid ->
+            link(Cli_pid),
+            {ok, Mgr_pid, Table_id, #{tabid => Table_id, clipid => Cli_pid}};
+        _Other_owner ->
+            {error, table_exists}
     end.
 
 
@@ -404,16 +405,16 @@ new_table_entry(Table_id, Cli_pid) ->
 handle_add_table(Table_name, Table_id, Cli_pid, Tables) ->
     ETS_tabid = ets:info(Table_id, id),
     Result = case maps:find(Table_name, Tables) of
-	error -> %% i.e. no table entry
-	    check_table_ets_entry(ETS_tabid, Cli_pid);
-	{ok, Table} ->
-	    check_table_entry(Table, ETS_tabid, Cli_pid)
+        error -> %% i.e. no table entry
+            check_table_ets_entry(ETS_tabid, Cli_pid);
+        {ok, Table} ->
+            check_table_entry(Table, ETS_tabid, Cli_pid)
     end,
     case Result of
-	{ok, Mgr_pid, ETS_tabid, Table2} ->
-	    {ok, Mgr_pid, ETS_tabid, maps:put(Table_name, Table2, Tables)};
-	Error = {error, _Reason} ->
-	    Error
+        {ok, Mgr_pid, ETS_tabid, Table2} ->
+            {ok, Mgr_pid, ETS_tabid, maps:put(Table_name, Table2, Tables)};
+        Error = {error, _Reason} ->
+            Error
     end.
 
 
@@ -426,12 +427,12 @@ handle_add_table(Table_name, Table_id, Cli_pid, Tables) ->
 check_table_ets_entry(Table_id, Cli_pid) ->
     Mgr_pid = self(),
     case ets:info(Table_id, owner) of
-	Mgr_pid ->
-	    new_table_entry(Table_id, Cli_pid);
-	Cli_pid ->
-	    new_table_entry(Table_id, Cli_pid);
-	_Other_owner ->
-	    {error, not_owner}
+        Mgr_pid ->
+            new_table_entry(Table_id, Cli_pid);
+        Cli_pid ->
+            new_table_entry(Table_id, Cli_pid);
+        _Other_owner ->
+            {error, not_owner}
     end.
 
 
@@ -445,26 +446,26 @@ check_table_entry(Table, Table_id, Cli_pid) ->
     {ok, Table_tabid} = maps:find(tabid, Table),
     {ok, Table_clipid} = maps:find(clipid, Table),
     case ets:info(Table_tabid) of
-	undefined -> %% we have a dead entry
-	    unlink(Table_clipid),
-	    new_table_entry(Table_id, Cli_pid);
-	_ ->
-	    if
-		Table_id =/= Table_tabid ->
-		    {error, table_exists};
-		true ->
-		    Mgr_pid = self(),
-		    case ets:info(Table_id, owner) of
-			Mgr_pid ->
-			    unlink(Table_clipid),
-			    new_table_entry(Table_id, Cli_pid);
-			Cli_pid ->
-			    unlink(Table_clipid),
-			    new_table_entry(Table_id, Cli_pid);
-			_Other_owner ->
-			    {error, not_owner}
-		    end
-	    end
+        undefined -> %% we have a dead entry
+            unlink(Table_clipid),
+            new_table_entry(Table_id, Cli_pid);
+        _ ->
+            if
+                Table_id =/= Table_tabid ->
+                    {error, table_exists};
+                true ->
+                    Mgr_pid = self(),
+                    case ets:info(Table_id, owner) of
+                        Mgr_pid ->
+                            unlink(Table_clipid),
+                            new_table_entry(Table_id, Cli_pid);
+                        Cli_pid ->
+                            unlink(Table_clipid),
+                            new_table_entry(Table_id, Cli_pid);
+                        _Other_owner ->
+                            {error, not_owner}
+                    end
+            end
     end.
 
 
@@ -499,17 +500,17 @@ check_table_entry(Table, Table_id, Cli_pid) ->
 -spec handle_del_table(atom(), pid(), map()) -> {ok, pid(), map()} | {error, term()}.
 handle_del_table(Table_name, Cli_pid, Tables) ->
     case maps:get(Table_name, Tables) of
-	error ->
-	    {error, no_such_table_entry};
-	Table ->
-	    case del_table_check(Cli_pid, Table) of
-		{ok, Table_clipid} ->
-		    unlink(Table_clipid),
-		    Mgr_pid = self(),
-		    {ok, Mgr_pid, maps:remove(Table_name, Tables)};
-		Error ->
-		    Error
-	    end
+        error ->
+            {error, no_such_table_entry};
+        Table ->
+            case del_table_check(Cli_pid, Table) of
+                {ok, Table_clipid} ->
+                    unlink(Table_clipid),
+                    Mgr_pid = self(),
+                    {ok, Mgr_pid, maps:remove(Table_name, Tables)};
+                Error ->
+                    Error
+            end
     end.
 
 
@@ -528,17 +529,17 @@ del_table_check(Cli_pid, Table) ->
     Table_tabid = maps:get(tabid, Table),
     Table_clipid = maps:get(clipid, Table),
     if
-	Cli_pid == Table_clipid ->
-	    {ok, Table_clipid};
-	true ->
-	    case ets:info(Table_tabid, owner) of
-		undefined ->
-		    {ok, Table_clipid};
-		Table_clipid ->
-		    {ok, Table_clipid};
-		_Other_owner ->
-		    {error, not_owner}
-	    end
+        Cli_pid == Table_clipid ->
+            {ok, Table_clipid};
+        true ->
+            case ets:info(Table_tabid, owner) of
+                undefined ->
+                    {ok, Table_clipid};
+                Table_clipid ->
+                    {ok, Table_clipid};
+                _Other_owner ->
+                    {error, not_owner}
+            end
     end.
 
 
@@ -555,19 +556,19 @@ del_table_check(Cli_pid, Table) ->
 -spec handle_EXIT(pid(), term(), map()) -> {ok, map()}.
 handle_EXIT(Cli_pid, _Reason, Tables) ->
     Tables2 = maps:map(
-		fun (_Table_name, Table) ->
-			maps:map(
-			  fun (clipid, Table_clipid)
-				when Table_clipid == Cli_pid ->
-				  none;
-			      (_Key, Value) ->
-				  Value
-			  end,
-			  Table
-			 )
-		end,
-		Tables
-	       ),
+                fun (_Table_name, Table) ->
+                        maps:map(
+                          fun (clipid, Table_clipid)
+                                when Table_clipid == Cli_pid ->
+                                  none;
+                              (_Key, Value) ->
+                                  Value
+                          end,
+                          Table
+                         )
+                end,
+                Tables
+               ),
     {ok, Tables2}.
 
 

@@ -1,3 +1,4 @@
+% -*- indent-tabs-mode:nil; -*-
 %%%-------------------------------------------------------------------
 %%% @author Fred Youhanaie <fyrlang@anydata.co.uk>
 %%% @copyright (C) 2019, Fred Youhanaie
@@ -21,7 +22,7 @@
 
 %% Application callbacks
 -export([start/2, start_phase/3, stop/1, prep_stop/1,
-	 config_change/3]).
+         config_change/3]).
 
 %%%===================================================================
 %%% Application callbacks
@@ -40,10 +41,10 @@
 -spec start(normal, atom()) -> {ok, pid()} | {error, term()}.
 start(normal, Inst_name) ->
     case etsmgr_sup:start_link(Inst_name) of
-	{ok, Pid} ->
-	    {ok, Pid};
-	Error ->
-	    Error
+        {ok, Pid} ->
+            {ok, Pid};
+        Error ->
+            Error
     end.
 
 %%--------------------------------------------------------------------
@@ -56,10 +57,10 @@ start(normal, Inst_name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec start_phase(Phase :: atom(),
-		  StartType :: normal |
-			       {takeover, Node :: node()} |
-			       {failover, Node :: node()},
-		  PhaseArgs :: term()) -> ok | {error, Reason :: term()}.
+                  StartType :: normal |
+                               {takeover, Node :: node()} |
+                               {failover, Node :: node()},
+                  PhaseArgs :: term()) -> ok | {error, Reason :: term()}.
 start_phase(_Phase, _StartType, _PhaseArgs) ->
     ok.
 
@@ -94,8 +95,8 @@ prep_stop(State) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec config_change(Changed :: [{Par :: atom(), Val :: term()}],
-		    New :: [{Par :: atom(), Val :: term()}],
-		    Removed :: [Par :: atom()]) -> ok.
+                    New :: [{Par :: atom(), Val :: term()}],
+                    Removed :: [Par :: atom()]) -> ok.
 config_change(_Changed, _New, _Removed) ->
     ok.
 

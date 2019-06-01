@@ -1,3 +1,4 @@
+% -*- indent-tabs-mode:nil; -*-
 %%%-------------------------------------------------------------------
 %%% @author Fred Youhanaie <fyrlang@anydata.co.uk>
 %%% @copyright (C) 2019, Fred Youhanaie
@@ -81,8 +82,8 @@ start(Inst_name) ->
     %% add the instance name suffix to the list of application servers
     {registered, Server_names_0} = lists:keyfind(registered, 1, App_0),
     Server_names_1 = lists:map(
-		       fun (S) -> inst_to_name(S, Inst_name) end,
-		       Server_names_0),
+                       fun (S) -> inst_to_name(S, Inst_name) end,
+                       Server_names_0),
     App_1 = lists:keyreplace(registered, 1, App_0, {registered, Server_names_1}),
 
     %% pass the instance name to the application as arg
@@ -313,9 +314,9 @@ inst_to_name(Prefix, Inst_name) ->
 -spec wait4server(atom()) -> ok.
 wait4server(Server_name) ->
     case erlang:whereis(Server_name) of
-	undefined ->
-	    timer:sleep(1000),
-	    wait4server(Server_name);
-	Pid when is_pid(Pid) ->
-	    ok
+        undefined ->
+            timer:sleep(1000),
+            wait4server(Server_name);
+        Pid when is_pid(Pid) ->
+            ok
     end.
