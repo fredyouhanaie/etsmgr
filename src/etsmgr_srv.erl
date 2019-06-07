@@ -129,6 +129,9 @@ add_table(Inst_name, Table_name, Table_id) ->
 %% We will also remove a table entry if the ETS table no longer
 %% exists.
 %%
+%% Since the client is expected to be the owner, it is responsible for
+%% deleting or removing `etsmgr' as the heir.
+%%
 %% @end
 %%--------------------------------------------------------------------
 -spec del_table(atom(), atom()) -> {ok, pid()} | {error, term()}.
@@ -331,6 +334,8 @@ format_status(_Opt, Status) ->
 %%--------------------------------------------------------------------
 -spec handle_new_table(atom(), atom(), list(), pid(), map()) -> {ok, pid(), ets:tid(), map()} | {error, term()}.
 handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables) ->
+    logger:info("new_table: Table_name=~p, ETS_name=~p, ETS_opts=~p, Cli_pid=~p.",
+                [Table_name, ETS_name, ETS_opts, Cli_pid]),
     Result = case maps:find(Table_name, Tables) of
                  error -> %% error is good, we create new table and entry
                      new_table_ets(ETS_name, ETS_opts, Cli_pid);
@@ -403,6 +408,8 @@ new_table_entry(Table_id, Cli_pid) ->
 %%--------------------------------------------------------------------
 -spec handle_add_table(atom(), ets:tid(), pid(), map()) -> {ok, pid(), ets:tid(), map()} | {error, term()}.
 handle_add_table(Table_name, Table_id, Cli_pid, Tables) ->
+    logger:info("add_table: Table_name=~p, Table_id=~p, Cli_pid=~p.",
+                [Table_name, Table_id, Cli_pid]),
     ETS_tabid = ets:info(Table_id, id),
     Result = case maps:find(Table_name, Tables) of
         error -> %% i.e. no table entry
@@ -490,15 +497,14 @@ check_table_entry(Table, Table_id, Cli_pid) ->
 %% <li>Otherwise, the registered client is unlinked and the table
 %% entry is removed.</li>
 %%
-%% <li>Since the client is expected to be the owner, it is responsible
-%% for deleting or removing `etsmgr' as the heir.</li>
-%%
 %% </ol>
 %%
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_del_table(atom(), pid(), map()) -> {ok, pid(), map()} | {error, term()}.
 handle_del_table(Table_name, Cli_pid, Tables) ->
+    logger:info("del_table: Table_name=~p, Cli_pid=~p.",
+                [Table_name, Cli_pid]),
     case maps:find(Table_name, Tables) of
         error ->
             {error, no_such_table_entry};
@@ -556,10 +562,12 @@ del_table_check(Cli_pid, Table) ->
 -spec handle_EXIT(pid(), term(), map()) -> {ok, map()}.
 handle_EXIT(Cli_pid, _Reason, Tables) ->
     Tables2 = maps:map(
-                fun (_Table_name, Table) ->
+                fun (Table_name, Table) ->
                         maps:map(
                           fun (clipid, Table_clipid)
                                 when Table_clipid == Cli_pid ->
+                                  logger:info("~p: Client ~p for table ~p removed.",
+                                              [?MODULE, Cli_pid, Table_name]),
                                   none;
                               (_Key, Value) ->
                                   Value
