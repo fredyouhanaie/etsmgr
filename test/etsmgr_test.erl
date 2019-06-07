@@ -54,3 +54,17 @@ etsmgr_add_table_1_test() ->
     ?assert(Mgr_pid == ets:info(Table_id, heir)),
     {ok, Mgr_pid} = etsmgr:del_table(table1),
     ok = etsmgr:stop().
+
+etsmgr_del_table_1_test() ->
+    ok = application:ensure_started(etsmgr),
+    ETS_id = ets:new(ets_1, []),
+    {ok, Mgr_pid, Table_id} = etsmgr:add_table(table1, ETS_id),
+    ?assert(self() == ets:info(Table_id, owner)),
+    ?assert(Mgr_pid == ets:info(Table_id, heir)),
+    {ok, Mgr_pid} = etsmgr:del_table(table1),
+    ok = etsmgr:stop().
+
+etsmgr_del_table_2_test() ->
+    ok = application:ensure_started(etsmgr),
+    {error, no_such_table_entry} = etsmgr:del_table(table1),
+    ok = etsmgr:stop().

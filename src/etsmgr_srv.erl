@@ -499,10 +499,10 @@ check_table_entry(Table, Table_id, Cli_pid) ->
 %%--------------------------------------------------------------------
 -spec handle_del_table(atom(), pid(), map()) -> {ok, pid(), map()} | {error, term()}.
 handle_del_table(Table_name, Cli_pid, Tables) ->
-    case maps:get(Table_name, Tables) of
+    case maps:find(Table_name, Tables) of
         error ->
             {error, no_such_table_entry};
-        Table ->
+        {ok, Table} ->
             case del_table_check(Cli_pid, Table) of
                 {ok, Table_clipid} ->
                     unlink(Table_clipid),
