@@ -138,6 +138,10 @@ restarted following a crash. In the latter case we would expect the
 manager to be aware of the entry. On successful completion, the client
 will be the owner of the ETS table, and `etsmgr_srv` will be the heir.
 
+If a client has multiple ETS tables that need to be managed by
+`etsmgr`, then `new_table` should be called multiple times, once per
+table.
+
 ### `etsmgr:add_table/2,3`
 
 This is similar to `new_table`, except it will not create a new ETS
@@ -147,12 +151,19 @@ manager has crashed and restarted and the client is reestablishing the
 arrangement. On successful completion, the client will be the owner of
 the ETS table, and `etsmgr_srv` will be the heir.
 
+If a client has multiple ETS tables that need to be managed by
+`etsmgr`, then `add_table` should be called multiple times, once per
+table.
+
 ### `etsmgr:del_table/1,2`
 
 This call is used when the client no longer needs a table to be
 managed, such as prior to termination. It will be up to the client to
 delete the ETS table.
 
+If a client has multiple ETS tables that are being managed by
+`etsmgr`, then `del_table` should be called multiple times, once per
+table.
 
 ### `etsmgr:wait4etsmgr/0,1`
 
