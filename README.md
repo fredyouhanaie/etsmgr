@@ -1,5 +1,7 @@
 # etsmgr
 
+[![Build Status](https://travis-ci.com/fredyouhanaie/etsmgr.svg?branch=master)](https://travis-ci.com/fredyouhanaie/etsmgr)
+
 `etsmgr` is a simple application that can act as the `heir` for ETS
 tables owned by other applications/processes. This allows the table
 owners to crash and restart without loosing the data stored in the
