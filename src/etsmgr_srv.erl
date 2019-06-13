@@ -233,7 +233,9 @@ handle_call({del_table, Table_name}, _From={Cli_pid, _Cli_ref}, State) ->
 handle_call({info}, _From, State) ->
     {reply, State#state.tables, State};
 
-handle_call(_Request, _From, State) ->
+handle_call(Request, From, State) ->
+    logger:warning("~p:handle_call: Unexpected request=~p, from pid=~p, ignored.",
+                   [?SERVER, Request, From]),
     Reply = ok,
     {reply, Reply, State}.
 
@@ -248,7 +250,9 @@ handle_call(_Request, _From, State) ->
                          {noreply, NewState :: term(), Timeout :: timeout()} |
                          {noreply, NewState :: term(), hibernate} |
                          {stop, Reason :: term(), NewState :: term()}.
-handle_cast(_Request, State) ->
+handle_cast(Request, State) ->
+    logger:warning("~p:handle_cast: Unexpected request=~p, ignored.",
+                   [?SERVER, Request]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -271,7 +275,8 @@ handle_info({'ETS-TRANSFER', Table_id, Cli_pid, Heir_data}, State) ->
     {ok, Tables2} = handle_ETS_TRANSFER(Table_id, Cli_pid, Heir_data, State#state.tables),
     {noreply, #state{tables=Tables2}};
 
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+    logger:warning("~p:handle_info: Unexpected message=~p.", [?SERVER, Info]),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -334,8 +339,8 @@ format_status(_Opt, Status) ->
 %%--------------------------------------------------------------------
 -spec handle_new_table(atom(), atom(), list(), pid(), map()) -> {ok, pid(), ets:tid(), map()} | {error, term()}.
 handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables) ->
-    logger:info("new_table: Table_name=~p, ETS_name=~p, ETS_opts=~p, Cli_pid=~p.",
-                [Table_name, ETS_name, ETS_opts, Cli_pid]),
+    logger:info("~p:new_table: Table_name=~p, ETS_name=~p, ETS_opts=~p, Cli_pid=~p.",
+                [?SERVER, Table_name, ETS_name, ETS_opts, Cli_pid]),
     Result = case maps:find(Table_name, Tables) of
                  error -> %% error is good, we create new table and entry
                      new_table_ets(ETS_name, ETS_opts, Cli_pid);
@@ -408,8 +413,8 @@ new_table_entry(Table_id, Cli_pid) ->
 %%--------------------------------------------------------------------
 -spec handle_add_table(atom(), ets:tid(), pid(), map()) -> {ok, pid(), ets:tid(), map()} | {error, term()}.
 handle_add_table(Table_name, Table_id, Cli_pid, Tables) ->
-    logger:info("add_table: Table_name=~p, Table_id=~p, Cli_pid=~p.",
-                [Table_name, Table_id, Cli_pid]),
+    logger:info("~p:add_table: Table_name=~p, Table_id=~p, Cli_pid=~p.",
+                [?SERVER, Table_name, Table_id, Cli_pid]),
     ETS_tabid = ets:info(Table_id, id),
     Result = case maps:find(Table_name, Tables) of
         error -> %% i.e. no table entry
@@ -503,8 +508,8 @@ check_table_entry(Table, Table_id, Cli_pid) ->
 %%--------------------------------------------------------------------
 -spec handle_del_table(atom(), pid(), map()) -> {ok, pid(), map()} | {error, term()}.
 handle_del_table(Table_name, Cli_pid, Tables) ->
-    logger:info("del_table: Table_name=~p, Cli_pid=~p.",
-                [Table_name, Cli_pid]),
+    logger:info("~p:del_table: Table_name=~p, Cli_pid=~p.",
+                [?SERVER, Table_name, Cli_pid]),
     case maps:find(Table_name, Tables) of
         error ->
             {error, no_such_table_entry};
@@ -560,7 +565,8 @@ del_table_check(Cli_pid, Table) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_EXIT(pid(), term(), map()) -> {ok, map()}.
-handle_EXIT(Cli_pid, _Reason, Tables) ->
+handle_EXIT(Cli_pid, Reason, Tables) ->
+    logger:notice("~p:EXIT: from pid=~p, reason=~p.", [?SERVER, Cli_pid, Reason]),
     Tables2 = maps:map(
                 fun (Table_name, Table) ->
                         maps:map(
@@ -586,5 +592,7 @@ handle_EXIT(Cli_pid, _Reason, Tables) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_ETS_TRANSFER(ets:tid(), pid(), term(), map()) -> {ok, map()}.
-handle_ETS_TRANSFER(_Table_id, _Cli_pid, _Heir_data, Tables) ->
+handle_ETS_TRANSFER(Table_id, Cli_pid, Heir_data, Tables) ->
+    logger:notice("~p:ETS-TRANSFER: for table=~p, from pid=~p, heir_data=~p.",
+                   [?SERVER, Table_id, Cli_pid, Heir_data]),
     {ok, Tables}.
