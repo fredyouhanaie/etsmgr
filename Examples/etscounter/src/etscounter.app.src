@@ -1,0 +1,16 @@
+{application, etscounter,
+ [{description, "etscounter - demonstrator for etsmgr"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {etscounter_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    etsmgr
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.
