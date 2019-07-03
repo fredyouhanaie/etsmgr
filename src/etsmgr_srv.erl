@@ -18,6 +18,11 @@
 %%% a unique key supplied by the client, and contains a further map of
 %%% details of the ETS table.
 %%%
+%%% As well as the tables map above, we also maintain a map of client
+%%% pids, where we keep count of the number of tables each client
+%%% has. The count is used to ensure we do not unlink a client process
+%%% until we've received `del_table' for all of the client's tables.
+%%%
 %%% New entries are added via the `new_table' or `add_table' requests.
 %%%
 %%% Existing entries are removed via the `del_table' request.
