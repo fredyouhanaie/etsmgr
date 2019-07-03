@@ -236,7 +236,7 @@ handle_call({del_table, Table_name}, _From={Cli_pid, _Cli_ref}, State) ->
     end;
 
 handle_call({info}, _From, State) ->
-    {reply, State, State};
+    {reply, State#state.tables, State};
 
 handle_call(Request, From, State) ->
     logger:warning("~p:handle_call: Unexpected request=~p, from pid=~p, ignored.",
