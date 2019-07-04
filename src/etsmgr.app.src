@@ -10,6 +10,7 @@
   {env,[]},
   {modules, []},
 
+  {maintainers, ["Fred Youhanaie"]},
   {licenses, ["Apache 2.0"]},
-  {links, []}
+  {links, [{"Github", "https://github.com/fredyouhanaie/etsmgr"}]}
  ]}.
