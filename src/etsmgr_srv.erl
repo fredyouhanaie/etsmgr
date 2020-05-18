@@ -297,7 +297,7 @@ handle_info(Info, State) ->
 -spec terminate(Reason :: normal | shutdown | {shutdown, term()} | term(),
                 State :: term()) -> any().
 terminate(Reason, State) ->
-    logger:warning("~p:terminate: reason=~p, state=~p.", [?SERVER, Reason, State]),
+    logger:info("~p:terminate: reason=~p, state=~p.", [?SERVER, Reason, State]),
     ok.
 
 %%--------------------------------------------------------------------
@@ -639,6 +639,6 @@ handle_EXIT(Cli_pid, Reason, Tables, Clients) ->
 %%--------------------------------------------------------------------
 -spec handle_ETS_TRANSFER(ets:tid(), pid(), term(), map()) -> {ok, map()}.
 handle_ETS_TRANSFER(Table_id, Cli_pid, Heir_data, Tables) ->
-    logger:notice("~p:handle_ETS-TRANSFER: for table=~p, from pid=~p, heir_data=~p.",
+    logger:info("~p:handle_ETS-TRANSFER: for table=~p, from pid=~p, heir_data=~p.",
                    [?SERVER, Table_id, Cli_pid, Heir_data]),
     {ok, Tables}.
