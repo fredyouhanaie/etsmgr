@@ -1,8 +1,8 @@
 %% -*- mode:html -*-
 
 @author Fred Youhanaie <fyrlang@anydata.co.uk>
-@copyright 2019 Fred Youhanaie
-@version 0.1.0
+@copyright 2019-2021 Fred Youhanaie
+@version 0.2.0
 
 @doc
 
@@ -100,8 +100,8 @@
 
 <p>
   It is up to the client software on how to wait and/or check for the
-  recovery of `etsmgr'. A single helper function, `wait4etsmgr', has
-  been provided for a very simple scenario.
+  recovery of `etsmgr'. A set of helper functions,
+  `wait4etsmgr/0,1,2', have been provided for a very simple scenario.
 </p>
 
 <p>
@@ -276,13 +276,14 @@
   to delete the ETS table.
 </p>
 
-<h4>`etsmgr:wait4etsmgr/0,1'</h4>
+<h4>`etsmgr:wait4etsmgr/0,1,2'</h4>
 
 <p>
   This is a helper function that can be used by the client to ensure
   `etsmgr' is up and running, either at start up or following the
-  unexpected termination of `etsmgr'. The function will block until
-  `etsmgr' is available.
+  unexpected termination of `etsmgr'. The functions will block until
+  `etsmgr' is available. The caller can specify a specific `etsmgr'
+  instance and/or the polling interval when checking for the server.
 </p>
 
 <h4>`etsmgr:info/0,1'</h4>
