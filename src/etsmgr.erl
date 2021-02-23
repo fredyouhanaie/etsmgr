@@ -40,7 +40,7 @@
 -export([inst_to_name/2]).
 -export([new_table/3, add_table/2, del_table/1, info/0]).
 -export([new_table/4, add_table/3, del_table/2, info/1]).
--export([wait4etsmgr/0, wait4etsmgr/1]).
+-export([wait4etsmgr/0, wait4etsmgr/1, wait4etsmgr/2]).
 
 %%====================================================================
 %% API functions
@@ -105,6 +105,7 @@ start(Inst_name) ->
 stop() ->
     stop(etsmgr).
 
+
 %%--------------------------------------------------------------------
 %% @doc Stop a named instance of the application.
 %%
@@ -117,6 +118,7 @@ stop() ->
 -spec stop(atom()) -> ok | {error, term()}.
 stop(Inst_name) ->
     application:stop(Inst_name).
+
 
 %%--------------------------------------------------------------------
 %% @doc Create and manage an ETS table.
@@ -247,7 +249,7 @@ info(Inst_name) ->
 %%--------------------------------------------------------------------
 %% @doc Block until the unnamed instance of the table manager has started.
 %%
-%% The function applies to the unname (aka `etsmgr') instance.
+%% The function applies to the unnamed (aka `etsmgr') instance.
 %%
 %% See `wait4etsmgr/1' for details.
 %%
@@ -259,7 +261,26 @@ wait4etsmgr() ->
 
 
 %%--------------------------------------------------------------------
-%% @doc Block until a named instance of the table manager has started.
+%% @doc Block until an instance of the table manager has started.
+%%
+%% The single argument may be an instance name or an interval
+%% (milliseconds) for the polling of the server. In either case,
+%% `wait4etsmgr/2' is called with the default value for the missing
+%% argument. These are `etsmgr' for the instance name, and `1000'
+%% milliseconds for the polling interval.
+%%
+%% @end
+%%--------------------------------------------------------------------
+-spec wait4etsmgr(atom()|integer()) -> ok.
+wait4etsmgr(Inst_name) when is_atom(Inst_name) ->
+    wait4etsmgr(Inst_name, 1000);
+
+wait4etsmgr(Interval) when is_integer(Interval) ->
+    wait4etsmgr(etsmgr, Interval).
+
+
+%%--------------------------------------------------------------------
+%% @doc Block until an instance of the table manager has started.
 %%
 %% This function is typically called when a client process detects
 %% that an instance of `etsmgr' has died.
@@ -267,16 +288,16 @@ wait4etsmgr() ->
 %% This is a very simplistic function that will block, perhaps
 %% forever, until the unnamed instance of `etsmgr' is up and running.
 %%
-%% Any sphisticated monitoring and restart scheme is beyond the scope
+%% Any sophisticated monitoring and restart scheme is beyond the scope
 %% of this module. Such functionality deserves its own
 %% module/application.
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec wait4etsmgr(atom()) -> ok.
-wait4etsmgr(Inst_name) ->
+-spec wait4etsmgr(atom(), integer()) -> ok.
+wait4etsmgr(Inst_name, Interval) ->
     Server_name = inst_to_name(etsmgr_srv, Inst_name),
-    wait4server(Server_name).
+    wait4server(Server_name, Interval).
 
 
 %%--------------------------------------------------------------------
@@ -307,16 +328,17 @@ inst_to_name(Prefix, Inst_name) ->
 %%--------------------------------------------------------------------
 %% @doc Block until a registered process has started.
 %%
-%% We check for the registered process at one second intervals.
+%% We check for the registered process, `Server_name', at `Interval'
+%% milliseconds intervals.
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec wait4server(atom()) -> ok.
-wait4server(Server_name) ->
+-spec wait4server(atom(), integer()) -> ok.
+wait4server(Server_name, Interval) ->
     case erlang:whereis(Server_name) of
         undefined ->
-            timer:sleep(1000),
-            wait4server(Server_name);
+            timer:sleep(Interval),
+            wait4server(Server_name, Interval);
         Pid when is_pid(Pid) ->
             ok
     end.

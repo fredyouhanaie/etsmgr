@@ -18,6 +18,11 @@ While adapting and embedding DeadZen's
 the second article, would have sufficed, it was felt that a more
 generic reusable approach would help future projects.
 
+## Recent updates
+
+- You can now specify a polling interval in the `wait4etsmgr/1,2`
+  calls. The default is 1000 milliseconds.
+
 ## Operation
 
 `etsmgr` can manage multiple ETS tables for multiple client processes.
@@ -55,7 +60,7 @@ terminate as soon as `etsmgr` terminates. However, this would be very
 unusual in an application that cares about resilience!
 
 It is up to the client software on how to wait and/or check for the
-recovery of `etsmgr`. A single helper function, `wait4etsmgr`, has
+recovery of `etsmgr`. A set of helper functions, `wait4etsmgr`, have
 been provided for a very simple scenario.
 
 If a client terminates without deleting its ETS table(s), `etsmgr`
@@ -167,12 +172,13 @@ If a client has multiple ETS tables that are being managed by
 `etsmgr`, then `del_table` should be called multiple times, once per
 table.
 
-### `etsmgr:wait4etsmgr/0,1`
+### `etsmgr:wait4etsmgr/0,1,2`
 
-This is a helper function that can be used by the client to ensure
+These helper functions that can be used by the client to ensure
 `etsmgr` is up and running, either at start up or following the
 termination of `etsmgr`. The function will block until `etsmgr` is
-available.
+available. The `/1,2` variants of the function allow the caller to
+choose the server instance and/or the polling interval.
 
 ### `etsmgr:info/0,1`
 
