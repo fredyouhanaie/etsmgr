@@ -114,19 +114,27 @@ new_table_test_() ->
 
 %%-------------------------------------------------------------------
 
-% simple add_table test
-etsmgr_add_table_1_test() ->
-    ok = application:ensure_started(etsmgr),
-
+add_table() ->
     ETS_id = ets:new(ets_1, []),
     {ok, Mgr_pid, Table_id} = etsmgr:add_table(table1, ETS_id),
+
     ?assert(self() == ets:info(Table_id, owner)),
     ?assert(Mgr_pid == ets:info(Table_id, heir)),
+    ?assertEqual({ok, Mgr_pid}, etsmgr:del_table(table1)),
+    ?assert(ets:delete(Table_id)),
+    true.
 
-    {ok, Mgr_pid} = etsmgr:del_table(table1),
-    ets:delete(Table_id),
+add_table_test_() ->
 
-    ok = etsmgr:stop().
+    {"add table",
+     [{setup, fun setup/0, fun cleanup/1,
+       {inorder,
+        [ {"add existing table", ?_assert(add_table())}]
+       }
+      }
+     ]}.
+
+%%-------------------------------------------------------------------
 
 % simple create/delete test
 etsmgr_del_table_1_test() ->
