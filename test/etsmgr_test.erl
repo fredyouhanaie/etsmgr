@@ -13,38 +13,72 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+%%-------------------------------------------------------------------
 % helper function for the tests
+
+%% check that the given instance of the server is a registered process
+%%
 check_server(Server, Inst_name) ->
     Process_name = etsmgr:inst_to_name(Server, Inst_name),
     erlang:whereis(Process_name) =/= undefined.
 
-% test the utility function
-etsmgr_inst_name_test() ->
-    ?assert(etsmgr_srv == etsmgr:inst_to_name(etsmgr_srv, etsmgr)),
-    ?assert(etsmgr_srv_aaa == etsmgr:inst_to_name(etsmgr_srv, aaa)).
+%%-------------------------------------------------------------------
 
-% start/stop the unnamed instance
-etsmgr_start_stop_1_test() ->
+inst_name_test_() ->
+    {"Instance name tests",
+     [ {"instance name for unnamed server",
+        ?_assertEqual(etsmgr_srv, etsmgr:inst_to_name(etsmgr_srv, etsmgr))},
+       {"instance name for named server",
+        ?_assertEqual(etsmgr_srv_aaa, etsmgr:inst_to_name(etsmgr_srv, aaa))}
+     ]}.
 
-    ok = etsmgr:start(),
-    ?assert(lists:keymember(etsmgr, 1, application:which_applications())),
-    ?assert(check_server(etsmgr_srv, etsmgr)),
-    ?assert(check_server(etsmgr_sup, etsmgr)),
+%%-------------------------------------------------------------------
 
-    ok = etsmgr:stop(),
-    ?assertNot(lists:keymember(etsmgr, 1, application:which_applications())).
+start_stop_test_() ->
 
-% start/stop a named instance
-etsmgr_start_stop_2_test() ->
-    Name = aaa,
+    {setup,
+     fun () -> logger:set_primary_config(#{level => error}) end,
+     fun (_) -> ok end,
+     [ {"start/stop the unnamed instance",
+        [ {"start application",
+           ?_assertEqual(ok, etsmgr:start())},
+          {"start application again",
+           ?_assertEqual({error, {already_started, etsmgr}}, etsmgr:start())},
+          {"check application started",
+           ?_assert(lists:keymember(etsmgr, 1, application:which_applications()))},
+          {"check genserver is present",
+           ?_assert(check_server(etsmgr_srv, etsmgr))},
+          {"check supervisor is present",
+           ?_assert(check_server(etsmgr_sup, etsmgr))},
+          {"stop application",
+           ?_assertEqual(ok, etsmgr:stop())},
+          {"stop application again",
+           ?_assertEqual({error, {not_started, etsmgr}}, etsmgr:stop())},
+          {"check applicaton stopped",
+           ?_assertNot(lists:keymember(etsmgr, 1, application:which_applications()))}
+        ]},
 
-    ok = etsmgr:start(Name),
-    ?assert(lists:keymember(Name, 1, application:which_applications())),
-    ?assert(check_server(etsmgr_srv, Name)),
-    ?assert(check_server(etsmgr_sup, Name)),
+       {"start/stop a named instance",
+        [ {"start application",
+           ?_assertEqual(ok, etsmgr:start(aaa))},
+          {"start application again",
+           ?_assertEqual({error, {already_started, aaa}}, etsmgr:start(aaa))},
+          {"check application started",
+           ?_assert(lists:keymember(aaa, 1, application:which_applications()))},
+          {"check genserver is present",
+           ?_assert(check_server(etsmgr_srv, aaa))},
+          {"check supervisor is present",
+           ?_assert(check_server(etsmgr_sup, aaa))},
+          {"stop application",
+           ?_assertEqual(ok, etsmgr:stop(aaa))},
+          {"stop application again",
+           ?_assertEqual({error, {not_started, aaa}}, etsmgr:stop(aaa))},
+          {"check applicaton stopped",
+           ?_assertNot(lists:keymember(aaa, 1, application:which_applications()))}
+        ]}
+     ]}.
 
-    ok = etsmgr:stop(Name),
-    ?assertNot(lists:keymember(Name, 1, application:which_applications())).
+%%-------------------------------------------------------------------
 
 % simple new_table test
 etsmgr_new_table_1_test() ->
@@ -126,3 +160,5 @@ etsmgr_del_table_3_test() ->
     ets:delete(Table_id2),
 
     ok = etsmgr:stop().
+
+%%-------------------------------------------------------------------
