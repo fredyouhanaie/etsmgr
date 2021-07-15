@@ -22,6 +22,17 @@ check_server(Server, Inst_name) ->
     Process_name = etsmgr:inst_to_name(Server, Inst_name),
     erlang:whereis(Process_name) =/= undefined.
 
+%% set up the tests
+%%
+setup() ->
+    logger:set_primary_config(#{level => error}),
+    etsmgr:start().
+
+%% stop the server at end of test
+%%
+cleanup(_) ->
+    etsmgr:stop().
+
 %%-------------------------------------------------------------------
 
 inst_name_test_() ->
@@ -80,18 +91,28 @@ start_stop_test_() ->
 
 %%-------------------------------------------------------------------
 
-% simple new_table test
-etsmgr_new_table_1_test() ->
-    ok = application:ensure_started(etsmgr),
+new_table() ->
 
     {ok, Mgr_pid, Table_id} = etsmgr:new_table(table1, ets_1, []),
-    ?assert(self() == ets:info(Table_id, owner)),
-    ?assert(Mgr_pid == ets:info(Table_id, heir)),
+    ?assert(is_pid(Mgr_pid)),
+    ?assert(is_reference(Table_id)),
+    ?assertEqual(self(), ets:info(Table_id, owner)),
+    ?assertEqual(Mgr_pid, ets:info(Table_id, heir)),
+    ?assertMatch({ok, Mgr_pid} when is_pid(Mgr_pid), etsmgr:del_table(table1)),
+    ?assert(ets:delete(Table_id)),
+    true.
 
-    {ok, Mgr_pid} = etsmgr:del_table(table1),
-    ets:delete(Table_id),
+new_table_test_() ->
 
-    ok = etsmgr:stop().
+    {"new table",
+     [{setup, fun setup/0, fun cleanup/1,
+       {inorder,
+        [ {"add new table", ?_assert(new_table())}]
+       }
+      }
+     ]}.
+
+%%-------------------------------------------------------------------
 
 % simple add_table test
 etsmgr_add_table_1_test() ->
