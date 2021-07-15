@@ -56,8 +56,10 @@ its ETS table(s) with the new instance of `etsmgr` as soon as the
 server restarts.
 
 If the client does not set the `trap_exit` flag, then it will
-terminate as soon as `etsmgr` terminates. However, this would be very
-unusual in an application that cares about resilience!
+terminate as soon as `etsmgr` terminates. However, not setting the
+`trap_exit` would be very unusual in an application that cares about
+resilience! The `trap_exit` flag is normally set within the OTP server
+callback, such as the `init` callback in a `gen_server`.
 
 It is up to the client software on how to wait and/or check for the
 recovery of `etsmgr`. A set of helper functions, `wait4etsmgr`, have
