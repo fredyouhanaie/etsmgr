@@ -1,6 +1,6 @@
 # etsmgr
 
-[![Build Status](https://travis-ci.com/fredyouhanaie/etsmgr.svg?branch=master)](https://travis-ci.com/fredyouhanaie/etsmgr)
+[![Erlang CI](https://github.com/fredyouhanaie/etsmgr/actions/workflows/erlang.yml/badge.svg)](https://github.com/fredyouhanaie/etsmgr/actions/workflows/erlang.yml)
 
 `etsmgr` is a simple application that can act as the `heir` for ETS
 tables owned by other applications/processes. This allows the table
