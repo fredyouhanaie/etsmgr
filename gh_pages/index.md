@@ -6,6 +6,8 @@ tables owned by other applications/processes. This allows the table
 owners to crash and restart without loosing the data stored in the
 table.
 
+<https://github.com/fredyouhanaie/etsmgr>.
+
 ---
 
 Follow these links for the module docs:
