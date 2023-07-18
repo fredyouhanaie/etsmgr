@@ -215,7 +215,7 @@ del_table(Table_name) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec del_table(atom(), atom()) -> ok | {error, term}.
+-spec del_table(atom(), atom()) -> ok | {error, term()}.
 del_table(Inst_name, Table_name) ->
     etsmgr_srv:del_table(Inst_name, Table_name).
 
