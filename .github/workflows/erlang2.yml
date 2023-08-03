@@ -23,7 +23,7 @@ jobs:
           - 25-alpine
           - 26-alpine
 
-    container: erlang:${{ matrix.release }}
+    container: erlang:${{ matrix.erlang }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
