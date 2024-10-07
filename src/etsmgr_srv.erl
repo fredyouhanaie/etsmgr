@@ -205,7 +205,7 @@ init(Inst_name) ->
                          {stop, Reason :: term(), Reply :: term(), NewState :: term()} |
                          {stop, Reason :: term(), NewState :: term()}.
 
-handle_call({new_table, Table_name, ETS_name, ETS_opts}, _From={Cli_pid, _Cli_ref}, State) ->
+handle_call({new_table, Table_name, ETS_name, ETS_opts}, {Cli_pid, _Cli_ref}=_From, State) ->
     case handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid,
                           State#state.tables, State#state.clients) of
         {ok, Mgr_pid, Table_id, Tables, Clients} ->
@@ -214,7 +214,7 @@ handle_call({new_table, Table_name, ETS_name, ETS_opts}, _From={Cli_pid, _Cli_re
             {reply, Error, State}
     end;
 
-handle_call({add_table, Table_name, Table_id}, _From={Cli_pid, _Cli_ref}, State) ->
+handle_call({add_table, Table_name, Table_id}, {Cli_pid, _Cli_ref}=_From, State) ->
     case handle_add_table(Table_name, Table_id, Cli_pid, State#state.tables, State#state.clients) of
         {ok, Mgr_pid, Table_id, Tables, Clients} ->
             {reply, {ok, Mgr_pid, Table_id},  State#state{tables=Tables, clients=Clients}};
@@ -222,7 +222,7 @@ handle_call({add_table, Table_name, Table_id}, _From={Cli_pid, _Cli_ref}, State)
             {reply, Error, State}
     end;
 
-handle_call({del_table, Table_name}, _From={Cli_pid, _Cli_ref}, State) ->
+handle_call({del_table, Table_name}, {Cli_pid, _Cli_ref}=_From, State) ->
     case handle_del_table(Table_name, Cli_pid, State#state.tables, State#state.clients) of
         {ok, Mgr_pid, Tables, Clients} ->
             {reply, {ok, Mgr_pid}, State#state{tables=Tables, clients=Clients}};
