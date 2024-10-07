@@ -75,22 +75,22 @@ start() ->
 start(etsmgr) ->
     application:start(etsmgr);
 
-start(Inst_name) ->
+start(InstName) ->
     %% retrieve the main app resource file
-    {ok, [{application, etsmgr, App_0}]} = file:consult(code:where_is_file("etsmgr.app")),
+    {ok, [{application, etsmgr, App0}]} = file:consult(code:where_is_file("etsmgr.app")),
 
     %% add the instance name suffix to the list of application servers
-    {registered, Server_names_0} = lists:keyfind(registered, 1, App_0),
-    Server_names_1 = lists:map(
-                       fun (S) -> inst_to_name(S, Inst_name) end,
-                       Server_names_0),
-    App_1 = lists:keyreplace(registered, 1, App_0, {registered, Server_names_1}),
+    {registered, ServerNames0} = lists:keyfind(registered, 1, App0),
+    ServerNames1 = lists:map(
+                       fun (S) -> inst_to_name(S, InstName) end,
+                       ServerNames0),
+    App1 = lists:keyreplace(registered, 1, App0, {registered, ServerNames1}),
 
     %% pass the instance name to the application as arg
-    App_2 = lists:keyreplace(mod, 1, App_1, {mod, {etsmgr_app, Inst_name}}),
+    App2 = lists:keyreplace(mod, 1, App1, {mod, {etsmgr_app, InstName}}),
 
-    application:load({application, Inst_name, App_2}),
-    application:start(Inst_name).
+    application:load({application, InstName, App2}),
+    application:start(InstName).
 
 
 %%--------------------------------------------------------------------
@@ -116,8 +116,8 @@ stop() ->
 %% @end
 %%--------------------------------------------------------------------
 -spec stop(atom()) -> ok | {error, term()}.
-stop(Inst_name) ->
-    application:stop(Inst_name).
+stop(InstName) ->
+    application:stop(InstName).
 
 
 %%--------------------------------------------------------------------
@@ -130,8 +130,8 @@ stop(Inst_name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec new_table(atom(), atom(), list()) -> {ok, pid(), ets:tid()} | {error, term()}.
-new_table(Table_name, ETS_name, ETS_opts) ->
-    new_table(etsmgr, Table_name, ETS_name, ETS_opts).
+new_table(TableName, ETSname, ETSopts) ->
+    new_table(etsmgr, TableName, ETSname, ETSopts).
 
 
 %%--------------------------------------------------------------------
@@ -140,12 +140,12 @@ new_table(Table_name, ETS_name, ETS_opts) ->
 %% This function is called by client software on start up, or on
 %% crash/restart. `etsmgr' will check and create the table.
 %%
-%% If `Table_name' is not known to `etsmgr', a new ETS table will be
+%% If `TableName' is not known to `etsmgr', a new ETS table will be
 %% created, the calling process will be the owner of the table, with
 %% `etsmgr' the heir, and `etsmgr' will be linked to the client
 %% process.
 %%
-%% If `Table_name' is already known to the server, then either the
+%% If `TableName' is already known to the server, then either the
 %% client has restarted following a crash, or there is a name conflict
 %% with another application. In the case of a restart, `etsmgr' will
 %% behave as if this is a fresh start, but the table will not be
@@ -155,8 +155,8 @@ new_table(Table_name, ETS_name, ETS_opts) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec new_table(atom(), atom(), atom(), list()) -> {ok, pid(), ets:tid()} | {error, term()}.
-new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
-    etsmgr_srv:new_table(Inst_name, Table_name, ETS_name, ETS_opts).
+new_table(InstName, TableName, ETSname, ETSopts) ->
+    etsmgr_srv:new_table(InstName, TableName, ETSname, ETSopts).
 
 
 %%--------------------------------------------------------------------
@@ -169,8 +169,8 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec add_table(atom(), ets:tid()) -> {ok, pid(), ets:tid()} | {error, term()}.
-add_table(Table_name, Table_id) ->
-    add_table(etsmgr, Table_name, Table_id).
+add_table(TableName, TableId) ->
+    add_table(etsmgr, TableName, TableId).
 
 
 %%--------------------------------------------------------------------
@@ -182,14 +182,14 @@ add_table(Table_name, Table_id) ->
 %% detected that the instance of `etsmgr' that was already managing
 %% the ETS tables has crashed and restarted.
 %%
-%% `Table_name' uniquely identifies the table within this instance of
+%% `TableName' uniquely identifies the table within this instance of
 %% `etsmgr'.
 %%
 %% @end
 %%--------------------------------------------------------------------
 -spec add_table(atom(), atom(), ets:tid()) -> {ok, pid(), ets:tid()} | {error, term()}.
-add_table(Inst_name, Table_name, Table_id) ->
-    etsmgr_srv:add_table(Inst_name, Table_name, Table_id).
+add_table(InstName, TableName, TableId) ->
+    etsmgr_srv:add_table(InstName, TableName, TableId).
 
 
 %%--------------------------------------------------------------------
@@ -202,8 +202,8 @@ add_table(Inst_name, Table_name, Table_id) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec del_table(atom()) -> ok | {error, term()}.
-del_table(Table_name) ->
-    del_table(etsmgr, Table_name).
+del_table(TableName) ->
+    del_table(etsmgr, TableName).
 
 
 %%--------------------------------------------------------------------
@@ -216,8 +216,8 @@ del_table(Table_name) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec del_table(atom(), atom()) -> ok | {error, term()}.
-del_table(Inst_name, Table_name) ->
-    etsmgr_srv:del_table(Inst_name, Table_name).
+del_table(InstName, TableName) ->
+    etsmgr_srv:del_table(InstName, TableName).
 
 
 %%--------------------------------------------------------------------
@@ -242,8 +242,8 @@ info() ->
 %% @end
 %%--------------------------------------------------------------------
 -spec info(atom()) -> map().
-info(Inst_name) ->
-    etsmgr_srv:info(Inst_name).
+info(InstName) ->
+    etsmgr_srv:info(InstName).
 
 
 %%--------------------------------------------------------------------
@@ -271,9 +271,9 @@ wait4etsmgr() ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec wait4etsmgr(atom()|integer()) -> ok.
-wait4etsmgr(Inst_name) when is_atom(Inst_name) ->
-    wait4etsmgr(Inst_name, 1000);
+-spec wait4etsmgr(atom() | integer()) -> ok.
+wait4etsmgr(InstName) when is_atom(InstName) ->
+    wait4etsmgr(InstName, 1000);
 
 wait4etsmgr(Interval) when is_integer(Interval) ->
     wait4etsmgr(etsmgr, Interval).
@@ -295,9 +295,9 @@ wait4etsmgr(Interval) when is_integer(Interval) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec wait4etsmgr(atom(), integer()) -> ok.
-wait4etsmgr(Inst_name, Interval) ->
-    Server_name = inst_to_name(etsmgr_srv, Inst_name),
-    wait4server(Server_name, Interval).
+wait4etsmgr(InstName, Interval) ->
+    ServerName = inst_to_name(etsmgr_srv, InstName),
+    wait4server(ServerName, Interval).
 
 
 %%--------------------------------------------------------------------
@@ -317,8 +317,8 @@ wait4etsmgr(Inst_name, Interval) ->
 -spec inst_to_name(atom(), atom()) -> atom().
 inst_to_name(Prefix, etsmgr) ->
     Prefix;
-inst_to_name(Prefix, Inst_name) ->
-    list_to_atom(atom_to_list(Prefix) ++ "_" ++ atom_to_list(Inst_name)).
+inst_to_name(Prefix, InstName) ->
+    list_to_atom(atom_to_list(Prefix) ++ "_" ++ atom_to_list(InstName)).
 
 
 %%====================================================================
@@ -328,17 +328,17 @@ inst_to_name(Prefix, Inst_name) ->
 %%--------------------------------------------------------------------
 %% @doc Block until a registered process has started.
 %%
-%% We check for the registered process, `Server_name', at `Interval'
+%% We check for the registered process, `ServerName', at `Interval'
 %% milliseconds intervals.
 %%
 %% @end
 %%--------------------------------------------------------------------
 -spec wait4server(atom(), integer()) -> ok.
-wait4server(Server_name, Interval) ->
-    case erlang:whereis(Server_name) of
+wait4server(ServerName, Interval) ->
+    case erlang:whereis(ServerName) of
         undefined ->
             timer:sleep(Interval),
-            wait4server(Server_name, Interval);
+            wait4server(ServerName, Interval);
         Pid when is_pid(Pid) ->
             ok
     end.
