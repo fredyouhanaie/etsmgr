@@ -61,7 +61,6 @@
 start() ->
     start(etsmgr).
 
-
 %%--------------------------------------------------------------------
 %% @doc Start a named instance of the application.
 %%
@@ -92,7 +91,6 @@ start(InstName) ->
     application:load({application, InstName, App2}),
     application:start(InstName).
 
-
 %%--------------------------------------------------------------------
 %% @doc Stop the unnamed instance of the application.
 %%
@@ -104,7 +102,6 @@ start(InstName) ->
 -spec stop() -> ok | {error, term()}.
 stop() ->
     stop(etsmgr).
-
 
 %%--------------------------------------------------------------------
 %% @doc Stop a named instance of the application.
@@ -119,7 +116,6 @@ stop() ->
 stop(InstName) ->
     application:stop(InstName).
 
-
 %%--------------------------------------------------------------------
 %% @doc Create and manage an ETS table.
 %%
@@ -132,7 +128,6 @@ stop(InstName) ->
 -spec new_table(atom(), atom(), list()) -> {ok, pid(), ets:tid()} | {error, term()}.
 new_table(TableName, ETSname, ETSopts) ->
     new_table(etsmgr, TableName, ETSname, ETSopts).
-
 
 %%--------------------------------------------------------------------
 %% @doc Create and manage an ETS table.
@@ -158,7 +153,6 @@ new_table(TableName, ETSname, ETSopts) ->
 new_table(InstName, TableName, ETSname, ETSopts) ->
     etsmgr_srv:new_table(InstName, TableName, ETSname, ETSopts).
 
-
 %%--------------------------------------------------------------------
 %% @doc Start managing an existing ETS table.
 %%
@@ -171,7 +165,6 @@ new_table(InstName, TableName, ETSname, ETSopts) ->
 -spec add_table(atom(), ets:tid()) -> {ok, pid(), ets:tid()} | {error, term()}.
 add_table(TableName, TableId) ->
     add_table(etsmgr, TableName, TableId).
-
 
 %%--------------------------------------------------------------------
 %% @doc Start managing an existing ETS table.
@@ -191,7 +184,6 @@ add_table(TableName, TableId) ->
 add_table(InstName, TableName, TableId) ->
     etsmgr_srv:add_table(InstName, TableName, TableId).
 
-
 %%--------------------------------------------------------------------
 %% @doc Remove a table from the list of managed tables.
 %%
@@ -204,7 +196,6 @@ add_table(InstName, TableName, TableId) ->
 -spec del_table(atom()) -> ok | {error, term()}.
 del_table(TableName) ->
     del_table(etsmgr, TableName).
-
 
 %%--------------------------------------------------------------------
 %% @doc Remove a table from the list of managed tables.
@@ -219,7 +210,6 @@ del_table(TableName) ->
 del_table(InstName, TableName) ->
     etsmgr_srv:del_table(InstName, TableName).
 
-
 %%--------------------------------------------------------------------
 %% @doc Return the tables currently under management.
 %%
@@ -233,7 +223,6 @@ del_table(InstName, TableName) ->
 info() ->
     info(etsmgr).
 
-
 %%--------------------------------------------------------------------
 %% @doc Return the tables currently under management.
 %%
@@ -244,7 +233,6 @@ info() ->
 -spec info(atom()) -> map().
 info(InstName) ->
     etsmgr_srv:info(InstName).
-
 
 %%--------------------------------------------------------------------
 %% @doc Block until the unnamed instance of the table manager has started.
@@ -258,7 +246,6 @@ info(InstName) ->
 -spec wait4etsmgr() -> ok.
 wait4etsmgr() ->
     wait4etsmgr(etsmgr).
-
 
 %%--------------------------------------------------------------------
 %% @doc Block until an instance of the table manager has started.
@@ -277,7 +264,6 @@ wait4etsmgr(InstName) when is_atom(InstName) ->
 
 wait4etsmgr(Interval) when is_integer(Interval) ->
     wait4etsmgr(etsmgr, Interval).
-
 
 %%--------------------------------------------------------------------
 %% @doc Block until an instance of the table manager has started.
@@ -299,7 +285,6 @@ wait4etsmgr(InstName, Interval) ->
     ServerName = inst_to_name(etsmgr_srv, InstName),
     wait4server(ServerName, Interval).
 
-
 %%--------------------------------------------------------------------
 %% @doc
 %% Convert an instance name to longer prefixed name.
@@ -319,7 +304,6 @@ inst_to_name(Prefix, etsmgr) ->
     Prefix;
 inst_to_name(Prefix, InstName) ->
     list_to_atom(atom_to_list(Prefix) ++ "_" ++ atom_to_list(InstName)).
-
 
 %%====================================================================
 %% Internal functions
@@ -342,3 +326,5 @@ wait4server(ServerName, Interval) ->
         Pid when is_pid(Pid) ->
             ok
     end.
+
+%%--------------------------------------------------------------------

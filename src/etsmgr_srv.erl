@@ -55,7 +55,6 @@
 %%% API
 %%%===================================================================
 
-
 %%--------------------------------------------------------------------
 %% @doc Create and manage an ETS table.
 %%
@@ -91,7 +90,6 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
             Error
     end.
 
-
 %%--------------------------------------------------------------------
 %% @doc manage an existing ETS table.
 %%
@@ -122,7 +120,6 @@ add_table(Inst_name, Table_name, Table_id) ->
             Error
     end.
 
-
 %%--------------------------------------------------------------------
 %% @doc Remove a table from the list of managed tables, and unlink
 %% from the client_pid.
@@ -144,7 +141,6 @@ del_table(Inst_name, Table_name) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     gen_server:call(Server_name, {del_table, Table_name}).
 
-
 %%--------------------------------------------------------------------
 %% @doc Return the tables currently under management.
 %%
@@ -161,7 +157,6 @@ info(Inst_name) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     gen_server:call(Server_name, {info}).
 
-
 %%--------------------------------------------------------------------
 %% @doc
 %% Starts the server
@@ -174,7 +169,6 @@ info(Inst_name) ->
 start_link(Inst_name) ->
     Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
     gen_server:start_link({local, Server_name}, ?MODULE, Inst_name, []).
-
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -357,7 +351,6 @@ handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables, Clients) ->
             Error
     end.
 
-
 %%--------------------------------------------------------------------
 %% @doc Create an ETS table and manage it.
 %%
@@ -374,7 +367,6 @@ new_table_ets(ETS_name, ETS_opts, Cli_pid, Clients) ->
         error:E ->
             {error, E}
     end.
-
 
 %%--------------------------------------------------------------------
 %% @doc Create/Update table entry for an existing ETS table.
@@ -442,7 +434,6 @@ handle_add_table(Table_name, Table_id, Cli_pid, Tables, Clients) ->
             Error
     end.
 
-
 %%--------------------------------------------------------------------
 %% @doc Check the status of an ETS table, and create/update table entry.
 %%
@@ -460,7 +451,6 @@ check_table_ets_entry(Table_id, Cli_pid, Clients) ->
         _Other_owner ->
             {error, not_owner}
     end.
-
 
 %%--------------------------------------------------------------------
 %% @doc Check, then create/update a table entry.
@@ -494,7 +484,6 @@ check_table_entry(Table, Table_id, Cli_pid, Clients) ->
                     end
             end
     end.
-
 
 %%--------------------------------------------------------------------
 %% @doc Handle a del_table request.
@@ -539,7 +528,6 @@ handle_del_table(Table_name, Cli_pid, Tables, Clients) ->
             end
     end.
 
-
 %%--------------------------------------------------------------------
 %% @doc Check a table entry before deleting it.
 %%
@@ -567,7 +555,6 @@ del_table_check(Cli_pid, Table) ->
                     {error, not_owner}
             end
     end.
-
 
 %%--------------------------------------------------------------------
 %% @doc Conditionally unlink client pid.
@@ -623,7 +610,6 @@ handle_exit(Cli_pid, Reason, Tables, Clients) ->
     Clients2 = maps:remove(Cli_pid, Clients),
     {ok, Tables2, Clients2}.
 
-
 %%--------------------------------------------------------------------
 %% @doc Handle the `ETS-TRANSFER' message.
 %%
@@ -634,3 +620,5 @@ handle_ets_transfer(Table_id, Cli_pid, Heir_data, Tables) ->
     logger:info("~p:handle_ets-transfer: for table=~p, from pid=~p, heir_data=~p.",
                    [?SERVER, Table_id, Cli_pid, Heir_data]),
     {ok, Tables}.
+
+%%--------------------------------------------------------------------
