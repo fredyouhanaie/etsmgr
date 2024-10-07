@@ -18,7 +18,7 @@
 %%%
 %%% <pre>
 %%%   #{id => 'etsmgr_sup',
-%%%     start => {'etsmgr_sup', start_link, [Inst_name]},
+%%%     start => {'etsmgr_sup', start_link, [InstName]},
 %%%     type => supervisor}
 %%% </pre>
 %%%
@@ -51,9 +51,9 @@
                       {error, {shutdown, term()}} |
                       {error, term()} |
                       ignore.
-start_link(Inst_name) ->
-    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    supervisor:start_link({local, Server_name}, ?MODULE, Inst_name).
+start_link(InstName) ->
+    ServerName = etsmgr:inst_to_name(?SERVER, InstName),
+    supervisor:start_link({local, ServerName}, ?MODULE, InstName).
 
 %%%===================================================================
 %%% Supervisor callbacks
@@ -72,14 +72,14 @@ start_link(Inst_name) ->
                   {ok, {SupFlags :: supervisor:sup_flags(),
                         [ChildSpec :: supervisor:child_spec()]}} |
                   ignore.
-init(Inst_name) ->
+init(InstName) ->
 
     SupFlags = #{strategy => one_for_one,
                  intensity => 1,
                  period => 5},
 
     Child1 = #{id => 'etsmgr_srv',
-               start => {'etsmgr_srv', start_link, [Inst_name]},
+               start => {'etsmgr_srv', start_link, [InstName]},
                restart => permanent,
                shutdown => 5000,
                type => worker,
