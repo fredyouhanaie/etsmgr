@@ -466,22 +466,16 @@ check_table_entry(Table, Table_id, Cli_pid, Clients) ->
         undefined -> %% we have a dead entry
             Clients2 = cli_pid_unlink(Table_clipid, Clients),
             new_table_entry(Table_id, Cli_pid, Clients2);
+        _ when Table_id =/= Table_tabid ->
+            {error, table_exists};
         _ ->
-            if
-                Table_id =/= Table_tabid ->
-                    {error, table_exists};
-                true ->
-                    Mgr_pid = self(),
-                    case ets:info(Table_id, owner) of
-                        Mgr_pid ->
-                            Clients2 = cli_pid_unlink(Table_clipid, Clients),
-                            new_table_entry(Table_id, Cli_pid, Clients2);
-                        Cli_pid ->
-                            Clients2 = cli_pid_unlink(Table_clipid, Clients),
-                            new_table_entry(Table_id, Cli_pid, Clients2);
-                        _Other_owner ->
-                            {error, not_owner}
-                    end
+            Mgr_pid = self(),
+            case ets:info(Table_id, owner) of
+                Pid when Pid == Mgr_pid orelse Pid == Cli_pid ->
+                    Clients2 = cli_pid_unlink(Table_clipid, Clients),
+                    new_table_entry(Table_id, Cli_pid, Clients2);
+                _Other_owner ->
+                    {error, not_owner}
             end
     end.
 
@@ -542,10 +536,10 @@ handle_del_table(Table_name, Cli_pid, Tables, Clients) ->
 del_table_check(Cli_pid, Table) ->
     Table_tabid = maps:get(tabid, Table),
     Table_clipid = maps:get(clipid, Table),
-    if
-        Cli_pid == Table_clipid ->
+    case Cli_pid of
+        Table_clipid ->
             {ok, Table_clipid};
-        true ->
+        _ ->
             case ets:info(Table_tabid, owner) of
                 undefined ->
                     {ok, Table_clipid};
