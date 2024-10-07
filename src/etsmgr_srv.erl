@@ -412,9 +412,8 @@ cli_pid_link(Cli_pid, Clients) ->
         error ->
             maps:put(Cli_pid, 1, Clients);
         {ok, Count} ->
-            maps:update(Cli_pid, Count+1, Clients)
+            maps:update(Cli_pid, Count + 1, Clients)
     end.
-
 
 %%--------------------------------------------------------------------
 %% @doc handle the `add_table' request.
@@ -589,9 +588,8 @@ cli_pid_unlink(Cli_pid, Clients) ->
             erlang:unlink(Cli_pid),
             maps:remove(Cli_pid, Clients);
         {ok, Count} ->
-            maps:update(Cli_pid, Count-1, Clients)
+            maps:update(Cli_pid, Count - 1, Clients)
     end.
-
 
 %%--------------------------------------------------------------------
 %% @doc handle the `EXIT' message.
