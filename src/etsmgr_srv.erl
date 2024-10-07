@@ -275,11 +275,11 @@ handle_cast(Request, State) ->
 handle_info({'EXIT', Cli_pid, Reason}, State) ->
     Tables = State#state.tables,
     Clients = State#state.clients,
-    {ok, Tables2, Clients2} = handle_EXIT(Cli_pid, Reason, Tables, Clients),
+    {ok, Tables2, Clients2} = handle_exit(Cli_pid, Reason, Tables, Clients),
     {noreply, State#state{tables=Tables2, clients=Clients2}};
 
 handle_info({'ETS-TRANSFER', Table_id, Cli_pid, Heir_data}, State) ->
-    {ok, Tables2} = handle_ETS_TRANSFER(Table_id, Cli_pid, Heir_data, State#state.tables),
+    {ok, Tables2} = handle_ets_transfer(Table_id, Cli_pid, Heir_data, State#state.tables),
     {noreply, State#state{tables=Tables2}};
 
 handle_info(Info, State) ->
@@ -603,15 +603,15 @@ cli_pid_unlink(Cli_pid, Clients) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec handle_EXIT(pid(), term(), map(), map()) -> {ok, map(), map()}.
-handle_EXIT(Cli_pid, Reason, Tables, Clients) ->
-    logger:notice("~p:handle_EXIT: from pid=~p, reason=~p.", [?SERVER, Cli_pid, Reason]),
+-spec handle_exit(pid(), term(), map(), map()) -> {ok, map(), map()}.
+handle_exit(Cli_pid, Reason, Tables, Clients) ->
+    logger:notice("~p:handle_exit: from pid=~p, reason=~p.", [?SERVER, Cli_pid, Reason]),
     Tables2 = maps:map(
                 fun (Table_name, Table) ->
                         maps:map(
                           fun (clipid, Table_clipid)
                                 when Table_clipid == Cli_pid ->
-                                  logger:info("~p:handle_EXIT Client ~p for table ~p removed.",
+                                  logger:info("~p:handle_exit Client ~p for table ~p removed.",
                                               [?SERVER, Cli_pid, Table_name]),
                                   none;
                               (_Key, Value) ->
@@ -631,8 +631,8 @@ handle_EXIT(Cli_pid, Reason, Tables, Clients) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec handle_ETS_TRANSFER(ets:tid(), pid(), term(), map()) -> {ok, map()}.
-handle_ETS_TRANSFER(Table_id, Cli_pid, Heir_data, Tables) ->
-    logger:info("~p:handle_ETS-TRANSFER: for table=~p, from pid=~p, heir_data=~p.",
+-spec handle_ets_transfer(ets:tid(), pid(), term(), map()) -> {ok, map()}.
+handle_ets_transfer(Table_id, Cli_pid, Heir_data, Tables) ->
+    logger:info("~p:handle_ets-transfer: for table=~p, from pid=~p, heir_data=~p.",
                    [?SERVER, Table_id, Cli_pid, Heir_data]),
     {ok, Tables}.
