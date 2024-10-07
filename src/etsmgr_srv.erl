@@ -212,7 +212,8 @@ init(Inst_name) ->
                          {stop, Reason :: term(), NewState :: term()}.
 
 handle_call({new_table, Table_name, ETS_name, ETS_opts}, _From={Cli_pid, _Cli_ref}, State) ->
-    case handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, State#state.tables, State#state.clients) of
+    case handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid,
+                          State#state.tables, State#state.clients) of
         {ok, Mgr_pid, Table_id, Tables, Clients} ->
             {reply, {ok, Mgr_pid, Table_id}, State#state{tables=Tables, clients=Clients}};
         Error = {error, _Reason} ->
@@ -331,7 +332,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec handle_new_table(atom(), atom(), list(), pid(), map(), map()) -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
+-spec handle_new_table(atom(), atom(), list(), pid(), map(), map())
+                      -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
 handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables, Clients) ->
     logger:info("~p:handle_new_table: Table_name=~p, ETS_name=~p, ETS_opts=~p, Cli_pid=~p.",
                 [?SERVER, Table_name, ETS_name, ETS_opts, Cli_pid]),
@@ -361,7 +363,8 @@ handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables, Clients) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec new_table_ets(atom(), list(), pid(), map()) -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
+-spec new_table_ets(atom(), list(), pid(), map())
+                   -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
 new_table_ets(ETS_name, ETS_opts, Cli_pid, Clients) ->
     try ets:new(ETS_name, ETS_opts) of
         ETS_table ->
@@ -381,7 +384,8 @@ new_table_ets(ETS_name, ETS_opts, Cli_pid, Clients) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec new_table_entry(ets:tid(), pid(), map()) -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
+-spec new_table_entry(ets:tid(), pid(), map())
+                     -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
 new_table_entry(Table_id, Cli_pid, Clients) ->
     Mgr_pid = self(),
     case ets:info(Table_id, owner) of
@@ -420,7 +424,8 @@ cli_pid_link(Cli_pid, Clients) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec handle_add_table(atom(), ets:tid(), pid(), map(), map()) -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
+-spec handle_add_table(atom(), ets:tid(), pid(), map(), map())
+                      -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
 handle_add_table(Table_name, Table_id, Cli_pid, Tables, Clients) ->
     logger:info("~p:handle_add_table: Table_name=~p, Table_id=~p, Cli_pid=~p.",
                 [?SERVER, Table_name, Table_id, Cli_pid]),
@@ -444,7 +449,8 @@ handle_add_table(Table_name, Table_id, Cli_pid, Tables, Clients) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec check_table_ets_entry(ets:tid(), pid(), map()) ->  {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
+-spec check_table_ets_entry(ets:tid(), pid(), map())
+                           ->  {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
 check_table_ets_entry(Table_id, Cli_pid, Clients) ->
     Mgr_pid = self(),
     case ets:info(Table_id, owner) of
@@ -462,7 +468,8 @@ check_table_ets_entry(Table_id, Cli_pid, Clients) ->
 %%
 %% @end
 %%--------------------------------------------------------------------
--spec check_table_entry(map(), ets:tid(), pid(), map()) -> {ok, pid(), ets:tid(), map()} | {error, term()}.
+-spec check_table_entry(map(), ets:tid(), pid(), map())
+                       -> {ok, pid(), ets:tid(), map()} | {error, term()}.
 check_table_entry(Table, Table_id, Cli_pid, Clients) ->
     {ok, Table_tabid} = maps:find(tabid, Table),
     {ok, Table_clipid} = maps:find(clipid, Table),
