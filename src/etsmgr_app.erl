@@ -39,8 +39,8 @@
 %% @end
 %%--------------------------------------------------------------------
 -spec start(normal, atom()) -> {ok, pid()} | {error, term()}.
-start(normal, Inst_name) ->
-    case etsmgr_sup:start_link(Inst_name) of
+start(normal, InstName) ->
+    case etsmgr_sup:start_link(InstName) of
         {ok, Pid} ->
             {ok, Pid};
         Error ->
