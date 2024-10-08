@@ -60,12 +60,12 @@
 %%
 %% This functions is expected to be called from the `etsmgr' module.
 %%
-%% If `Table_name' is not known to `etsmgr', a new ETS table will be
+%% If `TableName' is not known to `etsmgr', a new ETS table will be
 %% created, the calling process will be the owner of the table, with
 %% `etsmgr' the heir, and `etsmgr' will be linked to the client
 %% process.
 %%
-%% If an entry for `Table_name' already exists, then either the client
+%% If an entry for `TableName' already exists, then either the client
 %% has restarted following a crash, or there is a name conflict with
 %% another application. In the case of a restart, `etsmgr' will behave
 %% as if this is a fresh start, but the table will not be created and
@@ -75,13 +75,13 @@
 %% @end
 %%--------------------------------------------------------------------
 -spec new_table(atom(), atom(), atom(), list()) -> {ok, pid(), ets:tid()} | {error, term()}.
-new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
-    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    case gen_server:call(Server_name, {new_table, Table_name, ETS_name, ETS_opts}) of
-        {ok, Mgr_pid, Table_id} ->
-            try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
+new_table(InstName, TableName, ETSname, ETSopts) ->
+    ServerName = etsmgr:inst_to_name(?SERVER, InstName),
+    case gen_server:call(ServerName, {new_table, TableName, ETSname, ETSopts}) of
+        {ok, MgrPid, TableId} ->
+            try ets:setopts(TableId, {heir, MgrPid, TableName}) of
                 true ->
-                    {ok, Mgr_pid, Table_id}
+                    {ok, MgrPid, TableId}
             catch
                 error:E ->
                     {error, E}
@@ -105,13 +105,13 @@ new_table(Inst_name, Table_name, ETS_name, ETS_opts) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec add_table(atom(), atom(), ets:tid()) -> {ok, pid(), ets:tid()} | {error, term()}.
-add_table(Inst_name, Table_name, Table_id) ->
-    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    case gen_server:call(Server_name, {add_table, Table_name, Table_id}) of
-        {ok, Mgr_pid, Table_id} ->
-            try ets:setopts(Table_id, {heir, Mgr_pid, Table_name}) of
+add_table(InstName, TableName, TableId) ->
+    ServerName = etsmgr:inst_to_name(?SERVER, InstName),
+    case gen_server:call(ServerName, {add_table, TableName, TableId}) of
+        {ok, MgrPid, TableId} ->
+            try ets:setopts(TableId, {heir, MgrPid, TableName}) of
                 true ->
-                    {ok, Mgr_pid, Table_id}
+                    {ok, MgrPid, TableId}
             catch
                 error:E ->
                     {error, E}
@@ -137,9 +137,9 @@ add_table(Inst_name, Table_name, Table_id) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec del_table(atom(), atom()) -> {ok, pid()} | {error, term()}.
-del_table(Inst_name, Table_name) ->
-    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    gen_server:call(Server_name, {del_table, Table_name}).
+del_table(InstName, TableName) ->
+    ServerName = etsmgr:inst_to_name(?SERVER, InstName),
+    gen_server:call(ServerName, {del_table, TableName}).
 
 %%--------------------------------------------------------------------
 %% @doc Return the tables currently under management.
@@ -147,15 +147,15 @@ del_table(Inst_name, Table_name) ->
 %% This is primarily for debugging and troubleshooting.
 %%
 %% A map is returned where each entry has the client supplied
-%% `Table_name' as key, and a further map as the value. The inner map
+%% `TableName' as key, and a further map as the value. The inner map
 %% contains details of the corresponding ETS table being managed.
 %%
 %% @end
 %%--------------------------------------------------------------------
 -spec info(atom()) -> map().
-info(Inst_name) ->
-    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    gen_server:call(Server_name, {info}).
+info(InstName) ->
+    ServerName = etsmgr:inst_to_name(?SERVER, InstName),
+    gen_server:call(ServerName, {info}).
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -166,9 +166,9 @@ info(Inst_name) ->
                       {error, Error :: {already_started, pid()}} |
                       {error, Error :: term()} |
                       ignore.
-start_link(Inst_name) ->
-    Server_name = etsmgr:inst_to_name(?SERVER, Inst_name),
-    gen_server:start_link({local, Server_name}, ?MODULE, Inst_name, []).
+start_link(InstName) ->
+    ServerName = etsmgr:inst_to_name(?SERVER, InstName),
+    gen_server:start_link({local, ServerName}, ?MODULE, InstName, []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -185,9 +185,9 @@ start_link(Inst_name) ->
                               {ok, State :: term(), hibernate} |
                               {stop, Reason :: term()} |
                               ignore.
-init(Inst_name) ->
+init(InstName) ->
     process_flag(trap_exit, true),
-    {ok, #state{inst_name=Inst_name, tables=maps:new(), clients=maps:new()}}.
+    {ok, #state{inst_name=InstName, tables=maps:new(), clients=maps:new()}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -205,27 +205,27 @@ init(Inst_name) ->
                          {stop, Reason :: term(), Reply :: term(), NewState :: term()} |
                          {stop, Reason :: term(), NewState :: term()}.
 
-handle_call({new_table, Table_name, ETS_name, ETS_opts}, {Cli_pid, _Cli_ref}=_From, State) ->
-    case handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid,
+handle_call({new_table, TableName, ETSname, ETSopts}, {CliPid, _CliRef}=_From, State) ->
+    case handle_new_table(TableName, ETSname, ETSopts, CliPid,
                           State#state.tables, State#state.clients) of
-        {ok, Mgr_pid, Table_id, Tables, Clients} ->
-            {reply, {ok, Mgr_pid, Table_id}, State#state{tables=Tables, clients=Clients}};
+        {ok, MgrPid, TableId, Tables, Clients} ->
+            {reply, {ok, MgrPid, TableId}, State#state{tables=Tables, clients=Clients}};
         Error = {error, _Reason} ->
             {reply, Error, State}
     end;
 
-handle_call({add_table, Table_name, Table_id}, {Cli_pid, _Cli_ref}=_From, State) ->
-    case handle_add_table(Table_name, Table_id, Cli_pid, State#state.tables, State#state.clients) of
-        {ok, Mgr_pid, Table_id, Tables, Clients} ->
-            {reply, {ok, Mgr_pid, Table_id},  State#state{tables=Tables, clients=Clients}};
+handle_call({add_table, TableName, TableId}, {CliPid, _CliRef}=_From, State) ->
+    case handle_add_table(TableName, TableId, CliPid, State#state.tables, State#state.clients) of
+        {ok, MgrPid, TableId, Tables, Clients} ->
+            {reply, {ok, MgrPid, TableId},  State#state{tables=Tables, clients=Clients}};
         Error = {error, _Reason} ->
             {reply, Error, State}
     end;
 
-handle_call({del_table, Table_name}, {Cli_pid, _Cli_ref}=_From, State) ->
-    case handle_del_table(Table_name, Cli_pid, State#state.tables, State#state.clients) of
-        {ok, Mgr_pid, Tables, Clients} ->
-            {reply, {ok, Mgr_pid}, State#state{tables=Tables, clients=Clients}};
+handle_call({del_table, TableName}, {CliPid, _CliRef}=_From, State) ->
+    case handle_del_table(TableName, CliPid, State#state.tables, State#state.clients) of
+        {ok, MgrPid, Tables, Clients} ->
+            {reply, {ok, MgrPid}, State#state{tables=Tables, clients=Clients}};
         Error = {error, _Reason} ->
             {reply, Error, State}
     end;
@@ -266,14 +266,14 @@ handle_cast(Request, State) ->
                          {noreply, NewState :: term(), Timeout :: timeout()} |
                          {noreply, NewState :: term(), hibernate} |
                          {stop, Reason :: normal | term(), NewState :: term()}.
-handle_info({'EXIT', Cli_pid, Reason}, State) ->
+handle_info({'EXIT', CliPid, Reason}, State) ->
     Tables = State#state.tables,
     Clients = State#state.clients,
-    {ok, Tables2, Clients2} = handle_exit(Cli_pid, Reason, Tables, Clients),
+    {ok, Tables2, Clients2} = handle_exit(CliPid, Reason, Tables, Clients),
     {noreply, State#state{tables=Tables2, clients=Clients2}};
 
-handle_info({'ETS-TRANSFER', Table_id, Cli_pid, Heir_data}, State) ->
-    {ok, Tables2} = handle_ets_transfer(Table_id, Cli_pid, Heir_data, State#state.tables),
+handle_info({'ETS-TRANSFER', TableId, CliPid, HeirData}, State) ->
+    {ok, Tables2} = handle_ets_transfer(TableId, CliPid, HeirData, State#state.tables),
     {noreply, State#state{tables=Tables2}};
 
 handle_info(Info, State) ->
@@ -328,25 +328,25 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 -spec handle_new_table(atom(), atom(), list(), pid(), map(), map())
                       -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
-handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables, Clients) ->
-    logger:info("~p:handle_new_table: Table_name=~p, ETS_name=~p, ETS_opts=~p, Cli_pid=~p.",
-                [?SERVER, Table_name, ETS_name, ETS_opts, Cli_pid]),
-    Result = case maps:find(Table_name, Tables) of
+handle_new_table(TableName, ETSname, ETSopts, CliPid, Tables, Clients) ->
+    logger:info("~p:handle_new_table: TableName=~p, ETSname=~p, ETSopts=~p, CliPid=~p.",
+                [?SERVER, TableName, ETSname, ETSopts, CliPid]),
+    Result = case maps:find(TableName, Tables) of
                  error -> %% error is good, we create new table and entry
-                     new_table_ets(ETS_name, ETS_opts, Cli_pid, Clients);
+                     new_table_ets(ETSname, ETSopts, CliPid, Clients);
                  {ok, Table} ->
-                     {ok, Table_tid} = maps:find(tabid, Table),
-                     case ets:info(Table_tid) of
+                     {ok, TableTid} = maps:find(tabid, Table),
+                     case ets:info(TableTid) of
                          undefined -> %% dead table entry, we create new table and entry
-                             new_table_ets(ETS_name, ETS_opts, Cli_pid, Clients);
+                             new_table_ets(ETSname, ETSopts, CliPid, Clients);
                          _ -> %% We have a live entry, check/update entry
-                             new_table_entry(Table_tid, Cli_pid, Clients)
+                             new_table_entry(TableTid, CliPid, Clients)
                      end
              end,
 
     case Result of
-        {ok, Mgr_pid, Table_id, Table2, Clients2} ->
-            {ok, Mgr_pid, Table_id, maps:put(Table_name, Table2, Tables), Clients2};
+        {ok, MgrPid, TableId, Table2, Clients2} ->
+            {ok, MgrPid, TableId, maps:put(TableName, Table2, Tables), Clients2};
         Error = {error, _Reason} ->
             Error
     end.
@@ -358,11 +358,11 @@ handle_new_table(Table_name, ETS_name, ETS_opts, Cli_pid, Tables, Clients) ->
 %%--------------------------------------------------------------------
 -spec new_table_ets(atom(), list(), pid(), map())
                    -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
-new_table_ets(ETS_name, ETS_opts, Cli_pid, Clients) ->
-    try ets:new(ETS_name, ETS_opts) of
-        ETS_table ->
-            Table_id = ets:info(ETS_table, id),
-            new_table_entry(Table_id, Cli_pid, Clients)
+new_table_ets(ETSname, ETSopts, CliPid, Clients) ->
+    try ets:new(ETSname, ETSopts) of
+        ETStable ->
+            TableId = ets:info(ETStable, id),
+            new_table_entry(TableId, CliPid, Clients)
     catch
         error:E ->
             {error, E}
@@ -378,17 +378,17 @@ new_table_ets(ETS_name, ETS_opts, Cli_pid, Clients) ->
 %%--------------------------------------------------------------------
 -spec new_table_entry(ets:tid(), pid(), map())
                      -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
-new_table_entry(Table_id, Cli_pid, Clients) ->
-    Mgr_pid = self(),
-    case ets:info(Table_id, owner) of
-        Mgr_pid ->
-            ets:give_away(Table_id, Cli_pid, etsmgr),
-            Clients2 = cli_pid_link(Cli_pid, Clients),
-            {ok, Mgr_pid, Table_id, #{tabid => Table_id, clipid => Cli_pid}, Clients2};
-        Cli_pid ->
-            Clients2 = cli_pid_link(Cli_pid, Clients),
-            {ok, Mgr_pid, Table_id, #{tabid => Table_id, clipid => Cli_pid}, Clients2};
-        _Other_owner ->
+new_table_entry(TableId, CliPid, Clients) ->
+    MgrPid = self(),
+    case ets:info(TableId, owner) of
+        MgrPid ->
+            ets:give_away(TableId, CliPid, etsmgr),
+            Clients2 = cli_pid_link(CliPid, Clients),
+            {ok, MgrPid, TableId, #{tabid => TableId, clipid => CliPid}, Clients2};
+        CliPid ->
+            Clients2 = cli_pid_link(CliPid, Clients),
+            {ok, MgrPid, TableId, #{tabid => TableId, clipid => CliPid}, Clients2};
+        _OtherOwner ->
             {error, table_exists}
     end.
 
@@ -398,38 +398,38 @@ new_table_entry(Table_id, Cli_pid, Clients) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec cli_pid_link(pid(), map()) -> map().
-cli_pid_link(Cli_pid, Clients) ->
-    erlang:link(Cli_pid),
-    case maps:find(Cli_pid, Clients) of
+cli_pid_link(CliPid, Clients) ->
+    erlang:link(CliPid),
+    case maps:find(CliPid, Clients) of
         error ->
-            maps:put(Cli_pid, 1, Clients);
+            maps:put(CliPid, 1, Clients);
         {ok, Count} ->
-            maps:update(Cli_pid, Count + 1, Clients)
+            maps:update(CliPid, Count + 1, Clients)
     end.
 
 %%--------------------------------------------------------------------
 %% @doc handle the `add_table' request.
 %%
-%% Create a new table entry, however, if the `Table_name' already
+%% Create a new table entry, however, if the `TableName' already
 %% exists, we will perform further checks.
 %%
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_add_table(atom(), ets:tid(), pid(), map(), map())
                       -> {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
-handle_add_table(Table_name, Table_id, Cli_pid, Tables, Clients) ->
-    logger:info("~p:handle_add_table: Table_name=~p, Table_id=~p, Cli_pid=~p.",
-                [?SERVER, Table_name, Table_id, Cli_pid]),
-    ETS_tabid = ets:info(Table_id, id),
-    Result = case maps:find(Table_name, Tables) of
+handle_add_table(TableName, TableId, CliPid, Tables, Clients) ->
+    logger:info("~p:handle_add_table: TableName=~p, TableId=~p, CliPid=~p.",
+                [?SERVER, TableName, TableId, CliPid]),
+    ETStabid = ets:info(TableId, id),
+    Result = case maps:find(TableName, Tables) of
         error -> %% i.e. no table entry
-            check_table_ets_entry(ETS_tabid, Cli_pid, Clients);
+            check_table_ets_entry(ETStabid, CliPid, Clients);
         {ok, Table} ->
-            check_table_entry(Table, ETS_tabid, Cli_pid, Clients)
+            check_table_entry(Table, ETStabid, CliPid, Clients)
     end,
     case Result of
-        {ok, Mgr_pid, ETS_tabid, Table2, Clients2} ->
-            {ok, Mgr_pid, ETS_tabid, maps:put(Table_name, Table2, Tables), Clients2};
+        {ok, MgrPid, ETStabid, Table2, Clients2} ->
+            {ok, MgrPid, ETStabid, maps:put(TableName, Table2, Tables), Clients2};
         Error = {error, _Reason} ->
             Error
     end.
@@ -441,14 +441,14 @@ handle_add_table(Table_name, Table_id, Cli_pid, Tables, Clients) ->
 %%--------------------------------------------------------------------
 -spec check_table_ets_entry(ets:tid(), pid(), map())
                            ->  {ok, pid(), ets:tid(), map(), map()} | {error, term()}.
-check_table_ets_entry(Table_id, Cli_pid, Clients) ->
-    Mgr_pid = self(),
-    case ets:info(Table_id, owner) of
-        Mgr_pid ->
-            new_table_entry(Table_id, Cli_pid, Clients);
-        Cli_pid ->
-            new_table_entry(Table_id, Cli_pid, Clients);
-        _Other_owner ->
+check_table_ets_entry(TableId, CliPid, Clients) ->
+    MgrPid = self(),
+    case ets:info(TableId, owner) of
+        MgrPid ->
+            new_table_entry(TableId, CliPid, Clients);
+        CliPid ->
+            new_table_entry(TableId, CliPid, Clients);
+        _OtherOwner ->
             {error, not_owner}
     end.
 
@@ -459,22 +459,22 @@ check_table_ets_entry(Table_id, Cli_pid, Clients) ->
 %%--------------------------------------------------------------------
 -spec check_table_entry(map(), ets:tid(), pid(), map())
                        -> {ok, pid(), ets:tid(), map()} | {error, term()}.
-check_table_entry(Table, Table_id, Cli_pid, Clients) ->
-    {ok, Table_tabid} = maps:find(tabid, Table),
-    {ok, Table_clipid} = maps:find(clipid, Table),
-    case ets:info(Table_tabid) of
+check_table_entry(Table, TableId, CliPid, Clients) ->
+    {ok, TableTabid} = maps:find(tabid, Table),
+    {ok, TableClipid} = maps:find(clipid, Table),
+    case ets:info(TableTabid) of
         undefined -> %% we have a dead entry
-            Clients2 = cli_pid_unlink(Table_clipid, Clients),
-            new_table_entry(Table_id, Cli_pid, Clients2);
-        _ when Table_id =/= Table_tabid ->
+            Clients2 = cli_pid_unlink(TableClipid, Clients),
+            new_table_entry(TableId, CliPid, Clients2);
+        _ when TableId =/= TableTabid ->
             {error, table_exists};
         _ ->
-            Mgr_pid = self(),
-            case ets:info(Table_id, owner) of
-                Pid when Pid == Mgr_pid orelse Pid == Cli_pid ->
-                    Clients2 = cli_pid_unlink(Table_clipid, Clients),
-                    new_table_entry(Table_id, Cli_pid, Clients2);
-                _Other_owner ->
+            MgrPid = self(),
+            case ets:info(TableId, owner) of
+                Pid when Pid == MgrPid orelse Pid == CliPid ->
+                    Clients2 = cli_pid_unlink(TableClipid, Clients),
+                    new_table_entry(TableId, CliPid, Clients2);
+                _OtherOwner ->
                     {error, not_owner}
             end
     end.
@@ -482,7 +482,7 @@ check_table_entry(Table, Table_id, Cli_pid, Clients) ->
 %%--------------------------------------------------------------------
 %% @doc Handle a del_table request.
 %%
-%% The table entry for `Table_name' is removed, and the client is
+%% The table entry for `TableName' is removed, and the client is
 %% unlinked. It is up to the calling client to delete the ETS table,
 %% even if the `etsmgr' is the owner of the ETS table. In this case
 %% the client can request ownership via `add_table', before calling
@@ -505,18 +505,18 @@ check_table_entry(Table, Table_id, Cli_pid, Clients) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_del_table(atom(), pid(), map(), map()) -> {ok, pid(), map(), map()} | {error, term()}.
-handle_del_table(Table_name, Cli_pid, Tables, Clients) ->
-    logger:info("~p:handle_del_table: Table_name=~p, Cli_pid=~p.",
-                [?SERVER, Table_name, Cli_pid]),
-    case maps:find(Table_name, Tables) of
+handle_del_table(TableName, CliPid, Tables, Clients) ->
+    logger:info("~p:handle_del_table: TableName=~p, CliPid=~p.",
+                [?SERVER, TableName, CliPid]),
+    case maps:find(TableName, Tables) of
         error ->
             {error, no_such_table_entry};
         {ok, Table} ->
-            case del_table_check(Cli_pid, Table) of
-                {ok, Table_clipid} ->
-                    Clients2 = cli_pid_unlink(Table_clipid, Clients),
-                    Mgr_pid = self(),
-                    {ok, Mgr_pid, maps:remove(Table_name, Tables), Clients2};
+            case del_table_check(CliPid, Table) of
+                {ok, TableClipid} ->
+                    Clients2 = cli_pid_unlink(TableClipid, Clients),
+                    MgrPid = self(),
+                    {ok, MgrPid, maps:remove(TableName, Tables), Clients2};
                 Error ->
                     Error
             end
@@ -533,19 +533,19 @@ handle_del_table(Table_name, Cli_pid, Tables, Clients) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec del_table_check(pid(), map()) -> {ok, pid()} | {error, term()}.
-del_table_check(Cli_pid, Table) ->
-    Table_tabid = maps:get(tabid, Table),
-    Table_clipid = maps:get(clipid, Table),
-    case Cli_pid of
-        Table_clipid ->
-            {ok, Table_clipid};
+del_table_check(CliPid, Table) ->
+    TableTabid = maps:get(tabid, Table),
+    TableClipid = maps:get(clipid, Table),
+    case CliPid of
+        TableClipid ->
+            {ok, TableClipid};
         _ ->
-            case ets:info(Table_tabid, owner) of
+            case ets:info(TableTabid, owner) of
                 undefined ->
-                    {ok, Table_clipid};
-                Table_clipid ->
-                    {ok, Table_clipid};
-                _Other_owner ->
+                    {ok, TableClipid};
+                TableClipid ->
+                    {ok, TableClipid};
+                _OtherOwner ->
                     {error, not_owner}
             end
     end.
@@ -559,23 +559,23 @@ del_table_check(Cli_pid, Table) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec cli_pid_unlink(pid(), map()) -> map().
-cli_pid_unlink(Cli_pid, Clients) ->
-    case maps:find(Cli_pid, Clients) of
+cli_pid_unlink(CliPid, Clients) ->
+    case maps:find(CliPid, Clients) of
         error ->
             logger:warning("~p:cli_pid_unlink no entry for pid=~p - ignored.",
-                           [?SERVER, Cli_pid]),
+                           [?SERVER, CliPid]),
             Clients;
         {ok, 1} ->
-            erlang:unlink(Cli_pid),
-            maps:remove(Cli_pid, Clients);
+            erlang:unlink(CliPid),
+            maps:remove(CliPid, Clients);
         {ok, Count} ->
-            maps:update(Cli_pid, Count - 1, Clients)
+            maps:update(CliPid, Count - 1, Clients)
     end.
 
 %%--------------------------------------------------------------------
 %% @doc handle the `EXIT' message.
 %%
-%% We scan through all existing table entries and replace `Cli_pid' in
+%% We scan through all existing table entries and replace `CliPid' in
 %% the matching entries with `none'.
 %%
 %% Note that the same client may appear multiple times!
@@ -583,15 +583,15 @@ cli_pid_unlink(Cli_pid, Clients) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_exit(pid(), term(), map(), map()) -> {ok, map(), map()}.
-handle_exit(Cli_pid, Reason, Tables, Clients) ->
-    logger:notice("~p:handle_exit: from pid=~p, reason=~p.", [?SERVER, Cli_pid, Reason]),
+handle_exit(CliPid, Reason, Tables, Clients) ->
+    logger:notice("~p:handle_exit: from pid=~p, reason=~p.", [?SERVER, CliPid, Reason]),
     Tables2 = maps:map(
-                fun (Table_name, Table) ->
+                fun (TableName, Table) ->
                         maps:map(
-                          fun (clipid, Table_clipid)
-                                when Table_clipid == Cli_pid ->
+                          fun (clipid, TableClipid)
+                                when TableClipid == CliPid ->
                                   logger:info("~p:handle_exit Client ~p for table ~p removed.",
-                                              [?SERVER, Cli_pid, Table_name]),
+                                              [?SERVER, CliPid, TableName]),
                                   none;
                               (_Key, Value) ->
                                   Value
@@ -601,7 +601,7 @@ handle_exit(Cli_pid, Reason, Tables, Clients) ->
                 end,
                 Tables
                ),
-    Clients2 = maps:remove(Cli_pid, Clients),
+    Clients2 = maps:remove(CliPid, Clients),
     {ok, Tables2, Clients2}.
 
 %%--------------------------------------------------------------------
@@ -610,9 +610,9 @@ handle_exit(Cli_pid, Reason, Tables, Clients) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_ets_transfer(ets:tid(), pid(), term(), map()) -> {ok, map()}.
-handle_ets_transfer(Table_id, Cli_pid, Heir_data, Tables) ->
+handle_ets_transfer(TableId, CliPid, HeirData, Tables) ->
     logger:info("~p:handle_ets-transfer: for table=~p, from pid=~p, heir_data=~p.",
-                   [?SERVER, Table_id, Cli_pid, Heir_data]),
+                   [?SERVER, TableId, CliPid, HeirData]),
     {ok, Tables}.
 
 %%--------------------------------------------------------------------
