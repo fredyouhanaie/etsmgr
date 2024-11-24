@@ -14,6 +14,8 @@ _*
 _build
 ebin
 erl_crash.dump
+exdoc/
+gh_pages/overview.html
 log
 logs
 rebar3.crashdump
