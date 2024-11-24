@@ -157,7 +157,7 @@ handle_info({'EXIT', Pid, Reason}, State) ->
             logger:warning("~p: etsmgr (~p) has died, with Reason ~p.", [?SERVER, Pid, Reason]),
             logger:notice("~p: waiting for etsmgr to restart.", [?SERVER]),
             etsmgr:wait4etsmgr(),
-            {ok, Etsmgr_pid2} = etsmgr:add_table(etscounter, State#state.table_id),
+            {ok, Etsmgr_pid2, _Table_id} = etsmgr:add_table(etscounter, State#state.table_id),
             State2 = State#state{etsmgr_pid=Etsmgr_pid2},
             {noreply, State2};
         _ ->
