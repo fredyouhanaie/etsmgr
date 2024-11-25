@@ -1,16 +1,11 @@
-{application, etsmgr,
- [{description, "ETS Table Manager"},
-  {vsn, "0.2.0"},
-  {registered, [etsmgr_srv, etsmgr_sup]},
-  {mod, {etsmgr_app, etsmgr}},
-  {applications,
-   [kernel,
-    stdlib
-   ]},
-  {env,[]},
-  {modules, []},
-
-  {maintainers, ["Fred Youhanaie"]},
-  {licenses, ["Apache 2.0"]},
-  {links, [{"Github", "https://github.com/fredyouhanaie/etsmgr"}]}
- ]}.
+{application,etsmgr,
+             [{description,"ETS Table Manager"},
+              {vsn,"0.3.0"},
+              {registered,[etsmgr_srv,etsmgr_sup]},
+              {mod,{etsmgr_app,etsmgr}},
+              {applications,[kernel,stdlib]},
+              {env,[]},
+              {modules,[]},
+              {maintainers,["Fred Youhanaie"]},
+              {licenses,["Apache 2.0"]},
+              {links,[{"Github","https://github.com/fredyouhanaie/etsmgr"}]}]}.
