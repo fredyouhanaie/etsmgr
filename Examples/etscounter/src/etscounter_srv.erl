@@ -1,4 +1,3 @@
-% -*- indent-tabs-mode:nil; -*-
 %%%-------------------------------------------------------------------
 %%% @author Fred Youhanaie <fyrlang@anydata.co.uk>
 %%% @copyright (C) 2019, Fred Youhanaie
@@ -37,8 +36,6 @@ check() ->
 
 die() ->
     gen_server:cast(?SERVER, {die}).
-
-
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -181,7 +178,9 @@ handle_info(Info, State) ->
 %%--------------------------------------------------------------------
 -spec terminate(Reason :: normal | shutdown | {shutdown, term()} | term(),
 		State :: term()) -> any().
-terminate(_Reason, _State) ->
+terminate(_Reason, State) ->
+    etsmgr:del_table(etscounter),
+    ets:delete(State#state.table_id),
     ok.
 
 %%--------------------------------------------------------------------
