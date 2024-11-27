@@ -120,12 +120,9 @@ handle_cast({check}, State) ->
     logger:notice("~p: Table: ~p, Data ~p.", [?SERVER, Table_id, Result]),
     {noreply, State};
 
-handle_cast({die}, State) ->
-    exit(kill),
-    Table_id = State#state.table_id,
-    Result = ets:tab2list(Table_id),
-    logger:notice("~p: Table: ~p, Data ~p.", [?SERVER, Table_id, Result]),
-    {noreply, State};
+handle_cast({die}, _State) ->
+    logger:notice("~p: about to die.", [?SERVER]),
+    exit(self(), kill);
 
 handle_cast(Request, State) ->
     logger:warning("~p: unexpected cast ~p - ignored", [?SERVER, Request]),
@@ -179,6 +176,7 @@ handle_info(Info, State) ->
 -spec terminate(Reason :: normal | shutdown | {shutdown, term()} | term(),
 		State :: term()) -> any().
 terminate(_Reason, State) ->
+    logger:notice("~p: terminating", [?SERVER]),
     etsmgr:del_table(etscounter),
     ets:delete(State#state.table_id),
     ok.
