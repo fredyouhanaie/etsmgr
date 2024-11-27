@@ -10,6 +10,7 @@
 .idea
 .rebar
 .rebar3
+README.html
 _*
 _build
 ebin

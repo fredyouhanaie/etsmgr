@@ -27,6 +27,8 @@ following requests:
 * `etscounter_srv:die/0` - the server kills itself, this should result
   in a restart via the supervisor.
 
+---
+
 ## Build
 
 `rebar3` is used for all build and test activities. All rebar3
@@ -36,120 +38,215 @@ commands should be run within this directory:
 	$ rebar3 dialyzer
 	$ rebar3 shell
 
+---
+
+## The `etscounter` client
+
+This is a helper module for working with the `etscounter`
+application. It allows the start and stop of the application with
+`start/0` and `stop/0`.
+
+The `etsmgr` application will be started by `etscounter:start/0`, if
+it is not running. However, `etscounter:stop/0` will not stop it.
+
+The two functions `count/0` and `check/0` increment and print the
+counter stored the ETS table.
+
+The function `die/0` will kill the `etscounter_srv` server. This is
+there to simulate a crash.
+
+---
+
 ## Example run
 
-### Start up
+### Application start / crash / stop
 
-Start up via rebar3 and increment the counter:
+Below is a sample run of the application and increment the counter a few times:
 
-	$ rebar3 shell
-	===> Verifying dependencies...
-	===> Compiling etscounter
-	Erlang/OTP 22 [erts-10.4] [source] [64-bit] [smp:8:8] [ds:8:8:10] [async-threads:1] [hipe]
-	
-	Eshell V10.4  (abort with ^G)
-	1> ===> The rebar3 shell is a development tool; to deploy applications in production, consider using releases (http://www.rebar3.org/docs/releases)
-	===> Booted etsmgr
-	===> Booted etscounter
-	2019-06-24T19:06:09.126790+01:00 notice: etscounter_srv: got a table #Ref<0.3143534795.120979457.190595> from <0.148.0>, with data etsmgr.
-	
-	1> etscounter_srv:check().
-	2019-06-24T19:06:23.061987+01:00 notice: etscounter_srv: Table: #Ref<0.3143534795.120979457.190595>, Data [{count,0}].
-	ok
+```console
+$ rebar3 shell
+===> Verifying dependencies...
+===> Analyzing applications...
+===> Compiling etscounter
+Erlang/OTP 27 [erts-15.1.2] [source] [64-bit] [smp:4:4] [ds:4:4:10] [async-threads:1] [jit:ns]
 
-	2> etscounter_srv:count().
-	2019-06-24T19:06:33.189959+01:00 notice: etscounter_srv: Counter 1.
-	ok
+Eshell V15.1.2 (press Ctrl+G to abort, type help(). for help)
+1> etscounter:start().
+=NOTICE REPORT==== 27-Nov-2024::18:33:41.991055 ===
+etscounter_srv: got a table #Ref<0.1206219756.3245473793.80306> from <0.215.0>, with data etsmgr.
+ok
+2> etscounter:check().
+ok
+=NOTICE REPORT==== 27-Nov-2024::18:33:52.617686 ===
+etscounter_srv: Table: #Ref<0.1206219756.3245473793.80306>, Data [{count,0}].
+3> etscounter:count().
+=NOTICE REPORT==== 27-Nov-2024::18:34:00.786521 ===
+etscounter_srv: Counter 1.
+ok
+4> etscounter:count().
+=NOTICE REPORT==== 27-Nov-2024::18:34:01.828353 ===
+etscounter_srv: Counter 2.
+ok
+5> etscounter:count().
+=NOTICE REPORT==== 27-Nov-2024::18:34:03.270734 ===
+etscounter_srv: Counter 3.
+ok
+6> etscounter:check().
+=NOTICE REPORT==== 27-Nov-2024::18:34:09.467376 ===
+etscounter_srv: Table: #Ref<0.1206219756.3245473793.80306>, Data [{count,3}].
+ok
+```
 
-	3> etscounter_srv:count().
-	2019-06-24T19:06:35.075598+01:00 notice: etscounter_srv: Counter 2.
-	ok
+Now that we have some data in the table, lets kill the server. Once
+`etsmgr` detects the server exit, it takes over the table.
 
-	4> etscounter_srv:check().
-	2019-06-24T19:06:37.518082+01:00 notice: etscounter_srv: Table: #Ref<0.3143534795.120979457.190595>, Data [{count,2}].
-	ok
-	5> 
+In the mean time, the supervisor restarts the server.
 
+```console
+7> etscounter:die().
+=NOTICE REPORT==== 27-Nov-2024::18:34:15.418274 ===
+etscounter_srv: about to die.
+=NOTICE REPORT==== 27-Nov-2024::18:34:15.418749 ===
+etsmgr_srv:handle_exit: from pid=<0.219.0>, reason=killed.
+ok
+=SUPERVISOR REPORT==== 27-Nov-2024::18:34:15.419045 ===
+    supervisor: {local,etscounter_sup}
+    errorContext: child_terminated
+    reason: killed
+    offender: [{pid,<0.219.0>},
+               {id,etscounter_srv},
+               {mfargs,{etscounter_srv,start_link,[]}},
+               {restart_type,permanent},
+               {significant,false},
+               {shutdown,5000},
+               {child_type,worker}]
 
-### Application crash (self terminate)
+=NOTICE REPORT==== 27-Nov-2024::18:34:15.420143 ===
+etscounter_srv: got a table #Ref<0.1206219756.3245473793.80306> from <0.215.0>, with data etsmgr.
+```
 
-Let the `etscounter` server to self terminate:
+After the server is restart, it gets the old table. At this point the
+data in the table is intact, and we can increment the counter:
 
-	5> etscounter_srv:die().
-	ok
-	6> 2019-06-24T19:06:48.648467+01:00 error: ** Generic server etscounter_srv terminating , ** Last message in was {'$gen_cast',{die}}, ** When Server state == [[{'$initial_call',{etscounter_srv,init,1}},{'$ancestors',[etscounter_sup,<0.151.0>]}],{state,<0.148.0>,#Ref<0.3143534795.120979457.190595>}], ** Reason for termination ==, ** {kill,[{etscounter_srv,handle_cast,2,[{file,"/home/fy/Projects/etsmgr/etsmgr-src/Examples/etscounter/src/etscounter_srv.erl"},{line,127}]},{gen_server,try_dispatch,4,[{file,"gen_server.erl"},{line,637}]},{gen_server,handle_msg,6,[{file,"gen_server.erl"},{line,711}]},{proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,249}]}]}
-	2019-06-24T19:06:48.648935+01:00 error: crasher: initial call: etscounter_srv:init/1, pid: <0.153.0>, registered_name: etscounter_srv, exit: {kill,[{etscounter_srv,handle_cast,2,[{file,"/home/fy/Projects/etsmgr/etsmgr-src/Examples/etscounter/src/etscounter_srv.erl"},{line,127}]},{gen_server,try_dispatch,4,[{file,"gen_server.erl"},{line,637}]},{gen_server,handle_msg,6,[{file,"gen_server.erl"},{line,711}]},{proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,249}]}]}, ancestors: [etscounter_sup,<0.151.0>], message_queue_len: 0, messages: [], links: [<0.152.0>,<0.148.0>], dictionary: [], trap_exit: true, status: running, heap_size: 6772, stack_size: 27, reductions: 11788; neighbours:
-	2019-06-24T19:06:48.649499+01:00 notice: etsmgr_srv:ETS-TRANSFER: for table=#Ref<0.3143534795.120979457.190595>, from pid=<0.153.0>, heir_data=etscounter.
-	2019-06-24T19:06:48.649646+01:00 notice: etsmgr_srv:EXIT: from pid=<0.153.0>, reason=kill.
-	2019-06-24T19:06:48.649768+01:00 error: supervisor: {local,etscounter_sup}, errorContext: child_terminated, reason: kill, offender: [{pid,<0.153.0>},{id,etscounter_srv},{mfargs,{etscounter_srv,start_link,[]}},{restart_type,permanent},{shutdown,5000},{child_type,worker}]
-	2019-06-24T19:06:48.650030+01:00 notice: etscounter_srv: got a table #Ref<0.3143534795.120979457.190595> from <0.148.0>, with data etsmgr.
+```console
+8> etscounter:check().
+ok
+=NOTICE REPORT==== 27-Nov-2024::18:34:22.875673 ===
+etscounter_srv: Table: #Ref<0.1206219756.3245473793.80306>, Data [{count,3}].
+9> etscounter:count().
+ok
+=NOTICE REPORT==== 27-Nov-2024::18:34:27.527989 ===
+etscounter_srv: Counter 4.
+10> etscounter:count().
+=NOTICE REPORT==== 27-Nov-2024::18:34:28.473545 ===
+etscounter_srv: Counter 5.
+ok
+11> etscounter:check().
+ok
+=NOTICE REPORT==== 27-Nov-2024::18:34:40.571460 ===
+etscounter_srv: Table: #Ref<0.1206219756.3245473793.80306>, Data [{count,5}].
+```
 
-	6> etscounter_srv:check().
-	2019-06-24T19:06:53.822097+01:00 notice: etscounter_srv: Table: #Ref<0.3143534795.120979457.190595>, Data [{count,2}].
-	ok
+When we stop the application properly, `etsmgr` forgets about it too:
 
-	7> etscounter_srv:count().
-	ok
-	8> 2019-06-24T19:06:58.813759+01:00 notice: etscounter_srv: Counter 3.
+```console
+12> etsmgr:info().
+#{etscounter =>
+      #{tabid => #Ref<0.1206219756.3245473793.80306>,
+        clipid => <0.226.0>}}
+13> etscounter:stop().
+=NOTICE REPORT==== 27-Nov-2024::18:34:55.574259 ===
+etscounter_srv: terminating
+=INFO REPORT==== 27-Nov-2024::18:34:55.580286 ===
+    application: etscounter
+    exited: stopped
+    type: temporary
 
-	8> etscounter_srv:count().
-	ok
-	9> 2019-06-24T19:07:09.622162+01:00 notice: etscounter_srv: Counter 4.
-	
-
-
-
-### Application crash
-
-Kill the application server, `etscounter_srv` from outside:
-
-	9> exit(whereis(etscounter_srv), kill).
-	true
-	10> 2019-06-24T19:07:33.646743+01:00 notice: etsmgr_srv:ETS-TRANSFER: for table=#Ref<0.3143534795.120979457.190595>, from pid=<0.160.0>, heir_data=etscounter.
-	2019-06-24T19:07:33.647256+01:00 notice: etsmgr_srv:EXIT: from pid=<0.160.0>, reason=killed.
-	2019-06-24T19:07:33.647032+01:00 error: supervisor: {local,etscounter_sup}, errorContext: child_terminated, reason: killed, offender: [{pid,<0.160.0>},{id,etscounter_srv},{mfargs,{etscounter_srv,start_link,[]}},{restart_type,permanent},{shutdown,5000},{child_type,worker}]
-	2019-06-24T19:07:33.647764+01:00 notice: etscounter_srv: got a table #Ref<0.3143534795.120979457.190595> from <0.148.0>, with data etsmgr.
-
-	10> etscounter_srv:check().
-	ok
-	11> 2019-06-24T19:07:39.724325+01:00 notice: etscounter_srv: Table: #Ref<0.3143534795.120979457.190595>, Data [{count,4}].
-
-	11> etscounter_srv:count().
-	ok
-	12> 2019-06-24T19:07:46.902302+01:00 notice: etscounter_srv: Counter 5.
-
-	12> etscounter_srv:count().
-	ok
-	13> 2019-06-24T19:07:49.406015+01:00 notice: etscounter_srv: Counter 6.
+ok
+14> etsmgr:info().
+#{}
+```
+---
 
 ### Table manager crash
 
-We kill the table manager, `etsmgr`, but it is restarted by its
-supervisor, and the table is intact:
+We start the etscounter application and increment the counter a few times.
 
+```console
+$ rebar3 shell 
+===> Verifying dependencies...
+===> Analyzing applications...
+===> Compiling etscounter
+Erlang/OTP 27 [erts-15.1.2] [source] [64-bit] [smp:4:4] [ds:4:4:10] [async-threads:1] [jit:ns]
 
-	13> exit(whereis(etsmgr_srv), kill).
-	2019-06-24T19:08:08.132937+01:00 warning: etscounter_srv: etsmgr (<0.148.0>) has died, with Reason killed.
-	true
-	2019-06-24T19:08:08.132916+01:00 error: supervisor: {local,etsmgr_sup}, errorContext: child_terminated, reason: killed, offender: [{pid,<0.148.0>},{id,etsmgr_srv},{mfargs,{etsmgr_srv,start_link,[etsmgr]}},{restart_type,permanent},{shutdown,5000},{child_type,worker}]
-	14> 2019-06-24T19:08:08.133083+01:00 notice: etscounter_srv: waiting for etsmgr to restart.
-	2019-06-24T19:08:09.134405+01:00 error: ** Generic server etscounter_srv terminating , ** Last message in was {'EXIT',<0.148.0>,killed}, ** When Server state == [[{'$initial_call',{etscounter_srv,init,1}},{'$ancestors',[etscounter_sup,<0.151.0>]}],{state,<0.148.0>,#Ref<0.3143534795.120979457.190595>}], ** Reason for termination ==, ** {{badmatch,{ok,<0.169.0>,#Ref<0.3143534795.120979457.190595>}},[{etscounter_srv,handle_info,2,[{file,"/home/fy/Projects/etsmgr/etsmgr-src/Examples/etscounter/src/etscounter_srv.erl"},{line,160}]},{gen_server,try_dispatch,4,[{file,"gen_server.erl"},{line,637}]},{gen_server,handle_msg,6,[{file,"gen_server.erl"},{line,711}]},{proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,249}]}]}
-	2019-06-24T19:08:09.135366+01:00 error: crasher: initial call: etscounter_srv:init/1, pid: <0.165.0>, registered_name: etscounter_srv, error: {{badmatch,{ok,<0.169.0>,#Ref<0.3143534795.120979457.190595>}},[{etscounter_srv,handle_info,2,[{file,"/home/fy/Projects/etsmgr/etsmgr-src/Examples/etscounter/src/etscounter_srv.erl"},{line,160}]},{gen_server,try_dispatch,4,[{file,"gen_server.erl"},{line,637}]},{gen_server,handle_msg,6,[{file,"gen_server.erl"},{line,711}]},{proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,249}]}]}, ancestors: [etscounter_sup,<0.151.0>], message_queue_len: 0, messages: [], links: [<0.152.0>,<0.169.0>], dictionary: [], trap_exit: true, status: running, heap_size: 6772, stack_size: 27, reductions: 12889; neighbours:
-	2019-06-24T19:08:09.136355+01:00 notice: etsmgr_srv:ETS-TRANSFER: for table=#Ref<0.3143534795.120979457.190595>, from pid=<0.165.0>, heir_data=etscounter.
-	2019-06-24T19:08:09.136380+01:00 error: supervisor: {local,etscounter_sup}, errorContext: child_terminated, reason: {{badmatch,{ok,<0.169.0>,#Ref<0.3143534795.120979457.190595>}},[{etscounter_srv,handle_info,2,[{file,"/home/fy/Projects/etsmgr/etsmgr-src/Examples/etscounter/src/etscounter_srv.erl"},{line,160}]},{gen_server,try_dispatch,4,[{file,"gen_server.erl"},{line,637}]},{gen_server,handle_msg,6,[{file,"gen_server.erl"},{line,711}]},{proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,249}]}]}, offender: [{pid,<0.165.0>},{id,etscounter_srv},{mfargs,{etscounter_srv,start_link,[]}},{restart_type,permanent},{shutdown,5000},{child_type,worker}]
-	2019-06-24T19:08:09.136554+01:00 notice: etsmgr_srv:EXIT: from pid=<0.165.0>, reason={{badmatch,{ok,<0.169.0>,#Ref<0.3143534795.120979457.190595>}},[{etscounter_srv,handle_info,2,[{file,"/home/fy/Projects/etsmgr/etsmgr-src/Examples/etscounter/src/etscounter_srv.erl"},{line,160}]},{gen_server,try_dispatch,4,[{file,"gen_server.erl"},{line,637}]},{gen_server,handle_msg,6,[{file,"gen_server.erl"},{line,711}]},{proc_lib,init_p_do_apply,3,[{file,"proc_lib.erl"},{line,249}]}]}.
-	2019-06-24T19:08:09.137038+01:00 notice: etscounter_srv: got a table #Ref<0.3143534795.120979457.190595> from <0.169.0>, with data etsmgr.
+Eshell V15.1.2 (press Ctrl+G to abort, type help(). for help)
+1> etscounter:start().
+=NOTICE REPORT==== 27-Nov-2024::21:45:19.596323 ===
+etscounter_srv: got a table #Ref<0.2401600935.1396047875.201237> from <0.196.0>, with data etsmgr.
+ok
+2> etscounter:count().
+=NOTICE REPORT==== 27-Nov-2024::21:45:26.132965 ===
+etscounter_srv: Counter 1.
+ok
+3> etscounter:count().
+=NOTICE REPORT==== 27-Nov-2024::21:45:27.240615 ===
+etscounter_srv: Counter 2.
+ok
+4> etscounter:count().
+=NOTICE REPORT==== 27-Nov-2024::21:45:28.149160 ===
+etscounter_srv: Counter 3.
+ok
+5> etscounter:check().
+=NOTICE REPORT==== 27-Nov-2024::21:45:32.700151 ===
+etscounter_srv: Table: #Ref<0.2401600935.1396047875.201237>, Data [{count,3}].
+ok
+6> etscounter:check().
+=NOTICE REPORT==== 27-Nov-2024::21:46:19.886322 ===
+etscounter_srv: Table: #Ref<0.2401600935.1396047875.201237>, Data [{count,3}].
+ok
+7> etsmgr:info().
+#{etscounter =>
+      #{tabid => #Ref<0.2401600935.1396047875.201237>,
+        clipid => <0.200.0>}}
+```
 
-	14> etscounter_srv:check().
-	2019-06-24T19:08:15.101640+01:00 notice: etscounter_srv: Table: #Ref<0.3143534795.120979457.190595>, Data [{count,6}].
-	ok
+We kill the `etsmgr_srv` server (pid `<0.196.0>`) to simulate a
+crash. The `etscounter` application detects that and waits for
+`etsmgr_srv` to restart.
 
-	15> etscounter_srv:count().
-	2019-06-24T19:08:20.109055+01:00 notice: etscounter_srv: Counter 7.
-	ok
+```console
+8> exit(whereis(etsmgr_srv), kill).
+=WARNING REPORT==== 27-Nov-2024::21:46:49.951089 ===
+etscounter_srv: etsmgr (<0.196.0>) has died, with Reason killed.
+true
+=NOTICE REPORT==== 27-Nov-2024::21:46:49.951550 ===
+etscounter_srv: waiting for etsmgr to restart.
+=SUPERVISOR REPORT==== 27-Nov-2024::21:46:49.951640 ===
+    supervisor: {local,etsmgr_sup}
+    errorContext: child_terminated
+    reason: killed
+    offender: [{pid,<0.196.0>},
+               {id,etsmgr_srv},
+               {mfargs,{etsmgr_srv,start_link,[etsmgr]}},
+               {restart_type,permanent},
+               {significant,false},
+               {shutdown,5000},
+               {child_type,worker}]
+```
 
-	16> etscounter_srv:count().
-	2019-06-24T19:08:21.813889+01:00 notice: etscounter_srv: Counter 8.
-	ok
-	17> 
+The `etsmgr` server is back up with new pid - `<0.210.0>`.
 
+```console
+9> etsmgr:info().
+#{etscounter =>
+      #{tabid => #Ref<0.2401600935.1396047875.201237>,
+        clipid => <0.200.0>}}
+10> etscounter:check().
+=NOTICE REPORT==== 27-Nov-2024::21:48:57.707433 ===
+etscounter_srv: Table: #Ref<0.2401600935.1396047875.201237>, Data [{count,3}].
+ok
+11> whereis(etsmgr_srv).
+<0.210.0>
+```
+
+---
